@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { db } from "./firebase";
-import { collection, onSnapshot, doc, updateDoc } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { useAuthAdmin } from "./hooks/useAuth"; // <-- hook de auth
 
@@ -14,7 +14,7 @@ type Presente = {
 function App() {
   const [presentes, setPresentes] = useState<Presente[]>([]);
   const navigate = useNavigate();
-  const { user, isAdmin, loading } = useAuthAdmin(); // <-- pegando user/admin
+  const { user, isAdmin } = useAuthAdmin(); // <-- pegando user/admin
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "presentes"), (snapshot) => {
@@ -28,14 +28,6 @@ function App() {
 
     return () => unsubscribe();
   }, []);
-
-  async function escolherPresente(id: string) {
-    const presenteRef = doc(db, "presentes", id);
-
-    await updateDoc(presenteRef, {
-      reservado: true,
-    });
-  }
 
   // Função do botão condicional
   function handleAdminButton() {
