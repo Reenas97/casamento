@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
+import emailjs from "@emailjs/browser";
 import {
   doc,
   getDoc,
@@ -29,6 +30,7 @@ export default function PresenteDetalhe() {
   const [mensagem, setMensagem] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPix, setShowPix] = useState(false);
+  const [email, setEmail] = useState("");
 
   // 🔥 carregar presente
 useEffect(() => {
@@ -97,6 +99,27 @@ useEffect(() => {
     setLoading(false);
   }
 
+  async function enviarEmail() {
+  try {
+    await emailjs.send(
+      "service_li6djxs",
+      "template_7ok3rdj",
+      {
+        nome: nome,
+        presente: presente?.nome,
+        valor: presente?.preco,
+        mensagem: mensagem || "Sem mensagem",
+        to_email: email,
+      },
+      "emvFITicujaJMTYks"
+    );
+
+    console.log("Email enviado!");
+  } catch (error) {
+    console.error("Erro ao enviar email:", error);
+  }
+}
+
   // 🔹 confirma PIX manualmente
   async function confirmarPix() {
     if (!nome.trim()) {
@@ -124,6 +147,8 @@ useEffect(() => {
       data: serverTimestamp(), // Firebase cria timestamp automático
     });
   }
+
+  await enviarEmail();
 
 
     alert("✅ Pagamento confirmado! Obrigado pelo presente 💖");
@@ -248,6 +273,12 @@ useEffect(() => {
                   placeholder="Seu nome *"
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
+                  style={{ marginTop: 10, width: "100%", padding: 8 }}
+                />
+                <input
+                  placeholder="Seu e-mail *"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   style={{ marginTop: 10, width: "100%", padding: 8 }}
                 />
                 <textarea

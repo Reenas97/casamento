@@ -1,0 +1,151 @@
+$primary-color: #EDC8FF;
+$middle-purple: #CD67FF;
+$white: #ffffff;
+$text-dark: #333;
+
+@font-face {
+  font-family: "The Bigmarket";
+  src: url(../src/assets/fonts/the_bigmaker.otf)  format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Garet";
+  src: url(../src/assets/fonts/Garet-Book.otf)  format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Garet Heavy";
+  src: url(../src/assets/fonts/Garet-Heavy.otf)  format("opentype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  padding-top: 120px; 
+  background-image: url("../src/assets/background.jpeg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  font-family: 'Garet';
+  background-attachment: fixed;
+  .btn-white{
+    background: $white;
+    color: $primary-color;
+    border: none;
+    font-family: 'Garet';
+    &:hover{
+      background: $middle-purple;
+    }
+  }
+  .photo-banner {
+    height: 60vh;
+
+    background-position-y: 40%;
+    background-position-x: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    position: relative; // 🔥 necessário
+    overflow: hidden;
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.7); // 👈 ajuste a transparência
+      z-index: 1;
+    }
+
+    > * {
+      position: relative;
+      z-index: 2;
+    }
+
+    .banner-title{
+      font-family: "The Bigmarket", cursive;
+      font-size: 220px;
+      color: $white; // ou sua variável
+      position: relative;
+      z-index: 2; // 👈 acima da layer
+      text-align: center;
+      margin: 0;
+    }
+
+    .banner-text{
+      font-family: "Garet";
+      font-size: 40px;
+      color: $white; // ou sua variável
+      position: relative;
+      z-index: 2; // 👈 acima da layer
+      text-align: center;
+      margin: -50px 0 0 0 ;
+    }
+  }
+  .header{
+    height: 120px;
+    background: #EDC8FF;
+    .logo {
+      height: 100%;
+      max-height: 110px;
+      width: auto;
+      object-fit: contain;
+      padding: 4px;
+    }
+    .navbar-nav{
+      gap: 20px;
+      .nav-item a{
+        font-family: 'Garet';
+        color: $white;
+        font-size: 16px;
+      }
+    }
+  }
+  .flip-custom {
+  --fcc-background: #ffffff;
+  --fcc-digit-color: #CD67FF;
+  --fcc-divider-color: #EDC8FF;
+  --fcc-label-color: #CD67FF;
+  --fcc-spacing: 8px;
+  }
+
+  
+  @keyframes pop {
+    from {
+      transform: scale(0.9);
+      opacity: 0.6;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .present-card {
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border-radius: 1rem;
+    
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.12);
+    }
+  
+    &--reservado {
+      opacity: 0.5;
+      filter: grayscale(20%);
+    }
+  }
+
+
+}
