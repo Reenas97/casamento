@@ -55,7 +55,7 @@ function App() {
         <p className="banner-text">30/08/2026</p>
       </div>
 
-      <div className="d-flex p-5 align-items-center justify-content-center">
+      <div className="d-flex pt-5 pb-4 align-items-center justify-content-center">
          <FlipClockCountdown
           to={new Date("2026-08-30T12:30:00")}
           labels={["Dias", "Horas", "Minutos", "Segundos"]}
@@ -63,22 +63,33 @@ function App() {
         />
       </div>
 
-      <h1>Lista de Casamento 💍</h1>
-      <Row>
+      <h1>Lista de Presentes</h1>
+      <Row className="mt-4">
         {presentesPaginados.map((p) => (
           <Col key={p.id} xs="12" md="6" lg="4" className="mb-3">
             <Card
               className="h-100 present-card shadow-sm"
-              style={{ cursor: "pointer", opacity: p.reservado ? 0.5 : 1 }}
+              style={{ cursor: "pointer", opacity: p.reservado ? 0.8 : 1 }}
               onClick={() => navigate(`/presente/${p.id}`)}
             >
               <CardBody>
-                <CardTitle tag="h5">{p.nome}</CardTitle>
+                <CardTitle tag="p" className="fs-5">{p.nome}</CardTitle>
 
-                <p className="fw-bold mb-2">R$ {p.preco}</p>
+                <p className="fw-bold mb-2">
+                  {new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL",
+                  }).format(p.preco)}
+                </p>
 
-                <Badge color={p.reservado ? "danger" : "success"}>
-                  {p.reservado ? "❌ Já escolhido" : "✅ Disponível"}
+                  <Badge
+                    className={`bg-transparent border ${
+                      p.reservado
+                        ? "border-danger text-danger"
+                        : "border-success text-success"
+                    }`}
+                  >
+                  {p.reservado ? "Já escolhido" : "Disponível"}
                 </Badge>
               </CardBody>
             </Card>
@@ -86,7 +97,7 @@ function App() {
         ))}
       </Row>
       {totalPaginas > 1 && (
-        <Pagination className="d-flex justify-content-center mt-4">
+        <Pagination className="d-flex justify-content-center mt-2">
           <PaginationItem disabled={paginaAtual === 1}>
             <PaginationLink
               previous
@@ -112,7 +123,7 @@ function App() {
           </PaginationItem>
         </Pagination>
       )}
-      <p className="text-sm-center">Total de presentes: {presentes.length}</p>
+      <p className="text-sm-center mt-1"><small>Total de presentes: {presentes.length}</small></p>
     </Container>
   );
 }

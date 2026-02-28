@@ -1,4 +1,5 @@
 $primary-color: #EDC8FF;
+$light-blue: #C7DCFF;
 $middle-purple: #CD67FF;
 $white: #ffffff;
 $text-dark: #333;
@@ -35,11 +36,17 @@ body {
   background-repeat: no-repeat;
   font-family: 'Garet';
   background-attachment: fixed;
+  h1{
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.60);
+    color: $white;
+    text-align: center;
+  }
   .btn-white{
     background: $white;
     color: $primary-color;
     border: none;
     font-family: 'Garet';
+    box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.1);
     &:hover{
       background: $middle-purple;
     }
@@ -94,7 +101,9 @@ body {
   }
   .header{
     height: 120px;
-    background: #EDC8FF;
+    background: $primary-color;
+    border-bottom: 2px solid $white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.40);
     .logo {
       height: 100%;
       max-height: 110px;
@@ -133,18 +142,48 @@ body {
 
   .present-card {
     cursor: pointer;
+    position: relative;
     transition: all 0.25s ease;
     border-radius: 1rem;
-    
+    background: $light-blue;
+    border-color: $white;
+    color: $white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.25);
+    padding: 15px;
     &:hover {
       transform: translateY(-4px);
-      box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.12);
+      box-shadow: 0 0.5rem 1.2rem rgba(255, 255, 255, 0.8);
+    }
+    .badge{
+      position: absolute;
+      text-shadow: none;
+      top: 12px;
+      right: 12px;
+    }
+  }
+
+  .pagination{
+    margin: 0;
+    .page-item {
+    .page-link {
+      color: $middle-purple;
     }
   
-    &--reservado {
-      opacity: 0.5;
-      filter: grayscale(20%);
+    &.active {
+      .page-link {
+        background: $middle-purple;
+        border: none;
+        color: $white;
+      }
     }
+  }
+  }
+
+  footer{
+    background: $primary-color;
+    color: $white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.70);
+    border-top: 2px solid $white;
   }
 
 
