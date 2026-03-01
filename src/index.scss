@@ -1,5 +1,5 @@
 $primary-color: #EDC8FF;
-$light-blue: #C7DCFF;
+$light-blue: #A4C5FE;
 $middle-purple: #CD67FF;
 $white: #ffffff;
 $text-dark: #333;
@@ -28,6 +28,14 @@ $text-dark: #333;
   font-display: swap;
 }
 
+#root {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 86.8vh;
+
+}
+
 body {
   padding-top: 120px; 
   background-image: url("../src/assets/background.jpeg");
@@ -36,19 +44,30 @@ body {
   background-repeat: no-repeat;
   font-family: 'Garet';
   background-attachment: fixed;
+  height: 100%;
   h1{
     text-shadow: 2px 2px 4px rgba(0,0,0,0.60);
     color: $white;
     text-align: center;
   }
-  .btn-white{
-    background: $white;
-    color: $primary-color;
+  .btn {
     border: none;
-    font-family: 'Garet';
     box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.1);
-    &:hover{
+
+    &--white {
+      background: $white;
+      color: $middle-purple;
+
+      &:hover {
+        background: $primary-color;
+      }
+    }
+
+    &--purple {
       background: $middle-purple;
+      &:hover {
+        background: $primary-color;
+      }
     }
   }
   .photo-banner {
@@ -70,7 +89,7 @@ body {
       content: "";
       position: absolute;
       inset: 0;
-      background: rgba(255, 255, 255, 0.7); // 👈 ajuste a transparência
+      background: rgba(255, 255, 255, 0.5); // 👈 ajuste a transparência
       z-index: 1;
     }
 
@@ -101,7 +120,7 @@ body {
   }
   .header{
     height: 120px;
-    background: $primary-color;
+    background: $middle-purple;
     border-bottom: 2px solid $white;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.40);
     .logo {
@@ -179,8 +198,37 @@ body {
   }
   }
 
-  footer{
+  .modal-content{
     background: $primary-color;
+    .btn-close{
+      margin: 0;
+    }
+    .modal-title{
+      margin: auto;
+    }
+    .pix-container{
+      border: 5px solid $middle-purple;
+      background: $middle-purple;
+      width: auto;
+      border-radius: 10px;
+      svg{
+        border-radius: 10px;
+      }
+    }
+    .form-control {
+    border: 2px solid $middle-purple;
+
+      &::placeholder {
+      color: $middle-purple;
+      }
+    }
+    textarea{
+      height: 120px;
+    }
+  }
+
+  footer{
+    background: $middle-purple;
     color: $white;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.70);
     border-top: 2px solid $white;

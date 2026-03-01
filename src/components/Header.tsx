@@ -74,7 +74,7 @@ export default function Header() {
 
           {/* Botão Admin */}
           <Button
-            className="btn-white"
+            className="btn--white"
             onClick={handleAdminClick}
             disabled={!!user && !isAdmin}
           >

@@ -11,6 +11,9 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 import QRCode from "react-qr-code";
+import { Button, Container, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Spinner, Form, Tooltip } from "reactstrap";
+import { FaHandSparkles, FaInfoCircle, FaSmileBeam } from "react-icons/fa";
+import { swalError, swalSuccess } from "../helpers/swalAlert";
 
 type Presente = {
   id: string;
@@ -31,8 +34,13 @@ export default function PresenteDetalhe() {
   const [loading, setLoading] = useState(false);
   const [showPix, setShowPix] = useState(false);
   const [email, setEmail] = useState("");
+  const togglePix = () => setShowPix(!showPix);
+  const [modoPix, setModoPix] = useState<"full" | "partial">("full");
+  const [valorParcial, setValorParcial] = useState("");
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
 
-  // 🔥 carregar presente
+//carregar presente
 useEffect(() => {
   async function carregar() {
     if (!id) return;
@@ -49,57 +57,48 @@ useEffect(() => {
       };
 
       setPresente(presenteCarregado);
-
-      // ⚡ Se não tiver qrCodeValue, gera e salva
-      //if (!dados.qrCodeValue) {
-      //  await salvarQrCode(presenteCarregado.id, presenteCarregado);
-      //  // Atualiza localmente depois de salvar
-      //  const qrCodeGerado = gerarPix(presenteCarregado);
-      //  setPresente(prev => prev ? { ...prev, qrCodeValue: qrCodeGerado } : null);
-      //}
     }
   }
 
   carregar();
 }, [id]);
 
-  // 🔥 reservar presente com segurança
-  async function reservarPresente() {
-    if (!id) return;
-    setLoading(true);
-
-    try {
-      await runTransaction(db, async (transaction) => {
-        const ref = doc(db, "presentes", id);
-        const snap = await transaction.get(ref);
-
-        if (!snap.exists()) throw "Presente não existe";
-
-        const dados = snap.data();
-
-        if (dados.reservado) {
-          alert("😢 Esse presente já foi escolhido!");
-          throw "Já reservado";
-        }
-
-        transaction.update(ref, {
-          reservado: true,
-          reservadoPor: nome || "Convidado",
-          //mensagemConvidado: mensagem || "",
-        });
+//reservar presente
+async function reservarPresente() {
+  if (!id) return;
+  setLoading(true);
+  try {
+    await runTransaction(db, async (transaction) => {
+      const ref = doc(db, "presentes", id);
+      const snap = await transaction.get(ref);
+      if (!snap.exists()) throw "Presente não existe";
+      const dados = snap.data();
+      if (dados.reservado) {
+        await swalError(
+          "Ops!",
+          "Esse presente já foi escolhido."
+        );
+        throw "Já reservado";
+      }
+      transaction.update(ref, {
+        reservado: true,
+        reservadoPor: nome || "Convidado",
+        //mensagemConvidado: mensagem || "",
       });
-
-      alert("🎉 Presente reservado com sucesso!");
-      setShowPix(false);
-      navigate("/");
-    } catch (e) {
-      console.error(e);
-    }
-
-    setLoading(false);
+    });
+    await swalSuccess(
+      "Presente reservado!",
+      "Muito obrigada pelo carinho 💜"
+    );
+    setShowPix(false);
+    navigate("/");
+  } catch (e) {
+    console.error(e);
   }
+  setLoading(false);
+}
 
-  async function enviarEmail() {
+async function enviarEmail() {
   try {
     await emailjs.send(
       "service_li6djxs",
@@ -120,210 +119,199 @@ useEffect(() => {
   }
 }
 
-  // 🔹 confirma PIX manualmente
-  async function confirmarPix() {
-    if (!nome.trim()) {
-      alert("Por favor, informe seu nome!");
-      return;
-    }
+// confirma PIX manualmente
+async function confirmarPix() {
+if (!nome.trim()) {
+  alert("Por favor, informe seu nome!");
+  return;
+}
 
-    // 1️⃣ reservar presente
-    await reservarPresente();
+//reservar presente
+await reservarPresente();
 
-  // 2️⃣ salvar confirmação no Firestore
-  await addDoc(collection(db, "pagamentos"), {
+// salvar confirmação no Firestore
+await addDoc(collection(db, "pagamentos"), {
+  presenteId: id,
+  nomeConvidado: nome,
+  valorPago: modoPix === "full" ? presente?.preco : Number(valorParcial),
+  tipo: modoPix,
+  confirmado: true,
+  data: serverTimestamp(),
+});
+
+//salvar mensagem do convidado na coleção 'mensagens'
+if (mensagem.trim()) {
+  await addDoc(collection(db, "mensagens"), {
     presenteId: id,
     nomeConvidado: nome,
-    confirmado: true,
-    data: serverTimestamp(),
+    mensagem: mensagem,
+    data: serverTimestamp(), // Firebase cria timestamp automático
   });
+}
 
-  // 3️⃣ salvar mensagem do convidado na coleção 'mensagens'
-  if (mensagem.trim()) {
-    await addDoc(collection(db, "mensagens"), {
-      presenteId: id,
-      nomeConvidado: nome,
-      mensagem: mensagem,
-      data: serverTimestamp(), // Firebase cria timestamp automático
-    });
-  }
+await enviarEmail();
+  await swalSuccess(
+    "Pagamento confirmado!",
+    "Obrigada pelo presente 💖"
+  );
+}
 
-  await enviarEmail();
+if (!presente) return <p>Carregando...</p>;
 
+function abrirPixCompleto() {
+  setModoPix("full");
+  setShowPix(true);
+}
 
-    alert("✅ Pagamento confirmado! Obrigado pelo presente 💖");
-  }
-
-  if (!presente) return <p>Carregando...</p>;
-
-//// Função para calcular CRC16-CCITT
-//function crc16ccitt(str: string) {
-//  let crc = 0xFFFF;
-//  for (let i = 0; i < str.length; i++) {
-//    crc ^= str.charCodeAt(i) << 8;
-//    for (let j = 0; j < 8; j++) {
-//      crc = (crc & 0x8000) !== 0 ? ((crc << 1) ^ 0x1021) : (crc << 1);
-//      crc &= 0xFFFF;
-//    }
-//  }
-//  return crc.toString(16).toUpperCase().padStart(4, "0");
-//}
-//
-//// Função corrigida gerarPix
-//function gerarPix(presente: { nome: string; preco: number }) {
-//  const chavePix = "22869d59-aa4c-4462-bf98-4ddb3e91196e";
-//  const nomeRecebedor = "Renata e Pedro";
-//  const cidade = "São Paulo";
-//
-//  const valor = presente.preco.toFixed(2);
-//
-//  const msg = `Presente ${presente.nome} para ${nomeRecebedor}`;
-//  const subcampo01 = `01${msg.length.toString().padStart(2,'0')}${msg}`;
-//  const campo62 = `62${subcampo01.length.toString().padStart(2,'0')}${subcampo01}`;
-//
-//  let qr = 
-//    `000201` + 
-//    `26360014BR.GOV.BCB.PIX01${chavePix}` + 
-//    `52040000` + 
-//    `5303986` + 
-//    `54${valor.length.toString().padStart(2,'0')}${valor}` + 
-//    `5802BR` + 
-//    `59${nomeRecebedor.length.toString().padStart(2,'0')}${nomeRecebedor}` + 
-//    `60${cidade.length.toString().padStart(2,'0')}${cidade}` + 
-//    campo62 +
-//    `6304`; // CRC placeholder
-//
-//  const crc = crc16ccitt(qr);
-//  qr += crc;
-//
-//  return qr;
-//}
-
-//async function salvarQrCode(presenteId: string, presente: { nome: string; preco: number }) {
-//  const qrCodeValue = gerarPix(presente);
-//  const ref = doc(db, "presentes", presenteId);
-//
-//  await updateDoc(ref, { qrCodeValue });
-//}
+function abrirPixParcial() {
+  setModoPix("partial");
+  setShowPix(true);
+}
 
   return (
-    <div style={{ padding: 20 }}>
-      <button onClick={() => navigate("/")}>← Voltar</button>
-
+    <Container className="py-5">
       <h1>{presente.nome}</h1>
-      <p>R$ {presente.preco}</p>
+      <p className="fs-3">
+        {new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(presente.preco)}
+      </p>
       <p>{presente.descricao || "Sem descrição"}</p>
-
       <hr />
-
+      
       {presente.reservado ? (
-        <h2>❌ Este presente já foi escolhido</h2>
+      <h5 className="text-danger">
+        Este presente já foi escolhido
+      </h5>
       ) : (
-        <>
-          {/* Botão comprar */}
-          <button
-            style={{
-              marginTop: 10,
-              padding: "8px 16px",
-              backgroundColor: "#4caf50",
-              color: "white",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-            }}
-            onClick={() => setShowPix(true)}
+      <div className="d-flex flex-column align-items-center justify-content-center gap-3 mt-3">
+        {/*  compra inteira */}
+        <div>
+          <Button
+            className="btn--purple d-block mx-auto"
+            size="lg"
+            onClick={abrirPixCompleto}
           >
-            🛒 Comprar Presente
-          </button>
-
-          {/* Modal PIX */}
-          {showPix && (
-            <div
-              style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                backgroundColor: "rgba(0,0,0,0.5)",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: 20,
-              }}
-            >
-              <div
-                style={{
-                  backgroundColor: "white",
-                  padding: 20,
-                  borderRadius: 8,
-                  maxWidth: 400,
-                  width: "100%",
-                  textAlign: "center",
-                }}
-              >
-                <h2>💸 Faça o PIX</h2>
-                <p>Chave PIX: <b>chavepix@email.com</b></p>
-                <QRCode value={presente.qrCodeValue} size={180} />
-
-                <hr />
-
-                {/* Formulário dentro do modal */}
-                <input
-                  placeholder="Seu nome *"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  style={{ marginTop: 10, width: "100%", padding: 8 }}
-                />
-                <input
-                  placeholder="Seu e-mail *"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  style={{ marginTop: 10, width: "100%", padding: 8 }}
-                />
-                <textarea
-                  placeholder="Deixe uma mensagem 💌 (opcional)"
-                  value={mensagem}
-                  onChange={(e) => setMensagem(e.target.value)}
-                  style={{ marginTop: 10, width: "100%", padding: 8 }}
-                />
-
-                <button
-                  style={{
-                    marginTop: 10,
-                    padding: "8px 16px",
-                    backgroundColor: "#4caf50",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 4,
-                    cursor: "pointer",
-                  }}
-                  onClick={confirmarPix}
-                  disabled={loading}
-                >
-                  ✅ Confirmar PIX
-                </button>
-
-                <button
-                  style={{
-                    marginTop: 10,
-                    padding: "8px 16px",
-                    backgroundColor: "#f44336",
-                    color: "white",
-                    border: "none",
-                    borderRadius: 4,
-                    cursor: "pointer",
-                  }}
-                  onClick={() => setShowPix(false)}
-                  disabled={loading}
-                >
-                  ❌ Cancelar
-                </button>
-              </div>
-            </div>
-          )}
-        </>
+            Comprar presente completo
+          </Button>
+          <small className="text-muted d-block mt-1">
+            Você paga o valor total e reserva este presente para você.
+          </small>
+        </div>
+        {/*compra parcial */}
+        <div className="mx-auto">
+          <Button
+            className="btn--purple d-block mx-auto"
+            size="lg"
+            onClick={abrirPixParcial}
+          >
+            Ajudar com qualquer valor
+          </Button>
+          <small className="text-muted d-block mt-1">
+            Contribua com qualquer quantia. O presente continua disponível até atingir o valor total.
+          </small>
+        </div>
+      </div>
       )}
-    </div>
+      {/* Modal PIX */}
+      <Modal isOpen={showPix} toggle={togglePix} size="lg" centered backdrop="static">
+        <ModalHeader toggle={togglePix} className="text-center justify-content-between" tag={'h1'}>
+          {modoPix === "full"
+            ? "Fazer o PIX do valor inteiro"
+            : "Contribuir com este presente"}
+            {modoPix === "full" && (
+              <>
+                <FaInfoCircle
+                  id="infoCompra"
+                  style={{ cursor: "pointer", marginLeft: 6 }}
+                />
+                <Tooltip
+                  placement="top"
+                  isOpen={tooltipOpen}
+                  target="infoCompra"
+                  toggle={toggleTooltip}
+                >
+                  Oii! É a Renata aqui 
+                  <FaHandSparkles
+                    style={{ cursor: "pointer", marginLeft: 6 }}
+                  />
+                  Infelizmente não tem como parcelar o presente, pois Gatways de pagamento são pagos e a gente nao queria pagar taxa. 
+                  Então esse modo é apenas pix à vista. Caso queria "parcelar" escolha o outro modo, que é tipo um parcelamento coletivo. Obrigadaa
+                  <FaSmileBeam
+                    style={{ cursor: "pointer", marginLeft: 6 }}
+                  />
+                </Tooltip>
+            </>
+          )}
+        </ModalHeader>
+        <ModalBody className="text-center">
+          <p>
+            Chave PIX: <b>chavepix@email.com</b>
+          </p>
+          <div className="d-flex justify-content-center mb-3">
+            <div className="pix-container">
+              <QRCode value={presente.qrCodeValue} size={180} />
+            </div>
+          </div>
+          <Form>
+            {modoPix === "partial" && (
+            <FormGroup>
+              <Label>Com quanto você deseja contribuir?</Label>
+              <Input
+                type="number"
+                min="1"
+                value={valorParcial}
+                onChange={(e) => setValorParcial(e.target.value)}
+                placeholder="Digite o valor"
+                className="bg-transparent"
+              />
+            </FormGroup>
+          )}
+            <FormGroup>
+              <Label>Seu nome:</Label>
+              <Input
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                placeholder="Digite seu nome"
+                className="bg-transparent"
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>Seu e-mail:</Label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Digite seu e-mail"
+                className="bg-transparent"
+              />
+            </FormGroup>
+            <FormGroup>
+              <Label>Deixe a sua mensagem para os noivos: </Label>
+              <Input
+                type="textarea"
+                value={mensagem}
+                onChange={(e) => setMensagem(e.target.value)}
+                placeholder="Opcional"
+                className="bg-transparent"
+              />
+            </FormGroup>
+          </Form>
+        </ModalBody>
+        <ModalFooter>
+          <Button
+            className="btn--purple"
+            onClick={confirmarPix}
+            disabled={loading}
+          >
+            {loading ? <Spinner size="sm" /> : "Confirmar PIX"}
+          </Button>
+          <Button color="secondary" onClick={togglePix} disabled={loading}>
+            Cancelar
+          </Button>
+        </ModalFooter>
+      </Modal>
+    </Container>
   );
 }
