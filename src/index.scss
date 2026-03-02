@@ -293,6 +293,16 @@ body {
       height: unset;
     }
   }
+
+  .login-card{
+    background: $primary-color;
+    label{
+      color: $middle-purple;
+    }
+    input{
+      border: 2px solid $middle-purple;
+    }
+  }
   
 
 
