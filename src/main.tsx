@@ -10,6 +10,10 @@ import MainLayout from "./layouts/MainLayout";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "./index.scss";
+import 'swiper/css';
+import 'swiper/css/pagination';
+import "swiper/css/navigation";
+
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <BrowserRouter>

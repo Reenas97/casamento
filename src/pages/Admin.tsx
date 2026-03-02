@@ -5,6 +5,14 @@ import { useAuthAdmin } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
+import {  Swiper, SwiperSlide } from "swiper/react";
+import { Pagination, Navigation } from "swiper/modules";
+import { Button, Card, CardBody, Col, Container, FormGroup, Input, Label, Row, Form, Modal, ModalFooter, ModalBody, ModalHeader } from "reactstrap";
+import DataTable from "react-data-table-component";
+import { swalError, swalSuccess } from "../helpers/swalAlert";
+import Swal from "sweetalert2";
+import { FaEdit, FaTrash } from "react-icons/fa";
+import { NumericFormat } from "react-number-format";
 
 type Mensagem = {
   id: string;
@@ -37,61 +45,98 @@ export default function Admin() {
     reservado: false,
   });
   const { user, isAdmin, loading } = useAuthAdmin();
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-useEffect(() => {
-  const unsubscribe = onSnapshot(
-    collection(db, "presentes"),
-    (snapshot) => {
-      const lista: Presente[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Presente, "id">),
-      }));
-      setPresentes(lista);
-    }
+  const [modalEditar, setModalEditar] = useState(false);
+  const [presenteEditando, setPresenteEditando] = useState<Presente | null>(null);
+
+  const toggleModalEditar = () => setModalEditar(!modalEditar);
+
+  const columns = [
+    {
+      name: "Nome",
+      selector: (row: Presente) => row.nome,
+      sortable: true,
+    },
+    {
+      name: "Preço",
+      selector: (row: Presente) =>
+        new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(row.preco),
+    },
+    {
+      name: "Ações",
+      cell: (row: Presente) => (
+        <>
+          <button
+            onClick={() => abrirModalEdicao(row)}
+            className="btn btn-sm btn-primary me-2"
+          >
+            <FaEdit />
+          </button>
+
+          <button
+            onClick={() => excluirPresente(row.id!)}
+            className="btn btn-sm btn-danger"
+          >
+            <FaTrash />
+          </button>
+        </>
+      ),
+    },
+  ];
+
+  const [filtro, setFiltro] = useState("");
+
+  const presentesFiltrados = presentes.filter((p) =>
+    p.nome.toLowerCase().includes(filtro.toLowerCase())
   );
 
-  return () => unsubscribe();
-}, []);
 
-async function excluirPresente(id: string) {
-  if (!confirm("Deseja realmente excluir este produto?")) return;
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "presentes"),
+      (snapshot) => {
+        const lista: Presente[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Presente, "id">),
+        }));
+        setPresentes(lista);
+      }
+    );
 
-  try {
-    await deleteDoc(doc(db, "presentes", id));
-    alert("Produto excluído com sucesso!");
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao excluir produto");
-  }
-}
+    return () => unsubscribe();
+  }, []);
 
-async function atualizarPresente(presente: Presente) {
-  if (!presente.id) return;
-
-  try {
-    await updateDoc(doc(db, "presentes", presente.id), {
-      nome: presente.nome,
-      preco: presente.preco,
-      imagem: presente.imagem,
-      qrCodeValue: presente.qrCodeValue,
-      reservado: presente.reservado,
+  async function excluirPresente(id: string) {
+    const result = await Swal.fire({
+      title: "Tem certeza?",
+      text: "Deseja realmente excluir este produto?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#CD67FF",
+      confirmButtonText: "Sim, excluir",
+      cancelButtonText: "Cancelar",
     });
-    alert("Produto atualizado com sucesso!");
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao atualizar produto");
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await deleteDoc(doc(db, "presentes", id));
+      await swalSuccess("Produto excluído com sucesso!");
+    } catch (err) {
+      console.error(err);
+      await swalError("Erro ao excluir produto");
+    }
   }
-}
 
-
-console.log(isAdmin)
-
-useEffect(() => {
-  if (!loading && (!user || !isAdmin)) {
-    navigate("/");
-  }
-}, [user, isAdmin, loading]);
+  useEffect(() => {
+    if (!loading && (!user || !isAdmin)) {
+      navigate("/");
+    }
+  }, [user, isAdmin, loading]);
 
   useEffect(() => {
     const q = query(
@@ -113,7 +158,7 @@ useEffect(() => {
 
 
   function handleLogout() {
-  signOut(auth)
+    signOut(auth)
     .then(() => {
       // redireciona para a página inicial depois do logout
       navigate("/");
@@ -121,192 +166,319 @@ useEffect(() => {
     .catch((error) => {
       console.error("Erro ao sair:", error);
     });
-}
+  }
 
 
-async function adicionarPresente() {
-    if (!novoPresente.nome || novoPresente.preco <= 0) {
-      alert("Preencha o nome e o preço corretamente!");
-      return;
+  async function adicionarPresente() {
+      if (!novoPresente.nome || novoPresente.preco <= 0) {
+        await swalError("Preencha o nome e o preço corretamente!");
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "presentes"), novoPresente);
+        await swalSuccess("Presente adicionado com sucesso!");
+
+        setNovoPresente({
+          nome: "",
+          preco: 0,
+          imagem: "",
+          qrCodeValue: "",
+          reservado: false,
+        });
+      } catch (e) {
+        console.error(e);
+        await swalError("Erro ao adicionar presente");
+      }
     }
 
+
+  function abrirModalEdicao(presente: Presente) {
+    setPresenteEditando({ ...presente });
+    setModalEditar(true);
+  }
+
+  async function salvarEdicao() {
+    if (!presenteEditando?.id) return;
+
     try {
-      await addDoc(collection(db, "presentes"), novoPresente);
-      alert("🎁 Presente adicionado com sucesso!");
-      setNovoPresente({
-        nome: "",
-        preco: 0,
-        imagem: "",
-        qrCodeValue: "",
-        reservado: false,
+      await updateDoc(doc(db, "presentes", presenteEditando.id), {
+        nome: presenteEditando.nome,
+        preco: presenteEditando.preco,
+        imagem: presenteEditando.imagem,
+        qrCodeValue: presenteEditando.qrCodeValue,
+        reservado: presenteEditando.reservado,
       });
-    } catch (e) {
-      console.error(e);
-      alert("Erro ao adicionar presente");
+
+      await swalSuccess("Produto atualizado com sucesso!");
+      setModalEditar(false);
+    } catch (err) {
+      console.error(err);
+      await swalError("Erro ao atualizar produto");
     }
   }
 
   return (
-    <div style={{ padding: 20 }}>
-        <button
-  onClick={handleLogout}
-  style={{
-    marginBottom: 20,
-    padding: "8px 16px",
-    backgroundColor: "#f44336",
-    color: "white",
-    border: "none",
-    borderRadius: 4,
-    cursor: "pointer",
-  }}
->
-  Sair
-</button>
-      <h1>🔒 Painel dos Noivos</h1>
-
-      {mensagens.length === 0 && <p>Nenhuma mensagem ainda 💭</p>}
-
-      {mensagens.map((m) => (
-        <div
-          key={m.id}
-          style={{
-            border: "1px solid #ccc",
-            borderRadius: 8,
-            padding: 12,
-            marginBottom: 12,
-          }}
+    <Container className="py-4">
+        <Button
+          onClick={handleLogout}
+          className="btn--white"
         >
-          <p><b>👤 {m.nomeConvidado}</b></p>
-          <p>💌 {m.mensagem}</p>
-          <p style={{ fontSize: 12, opacity: 0.6 }}>
-            🎁 Presente: {m.presenteId}
-          </p>
-        </div>
-      ))}
+          Sair
+        </Button>
+      <h1>Painel dos Noivos</h1>
+
+      {/* mensagens */}
+
+      {mensagens.length === 0 && <p>Nenhuma mensagem ainda</p>}
+
+      {mensagens.length > 0 && (
+        <Swiper
+          className="py-5 mb-5"
+          modules={[Pagination, Navigation]}
+          spaceBetween={20}
+          slidesPerView={1}
+          breakpoints={{
+            768: { slidesPerView: 2 },
+            1200: { slidesPerView: 3 },
+          }}
+          pagination={{ clickable: true }}
+            navigation
+            loop
+          >
+          {mensagens.map((m) => {
+            const presente = presentes.find(p => p.id === m.presenteId);
+
+            return (
+              <SwiperSlide key={m.id}>
+                <div>
+                  <div className="swiper-content">
+                    <p><b className="fs-5">{m.nomeConvidado}</b></p>
+                    <hr />
+                    <p><b>Mensagem:</b> {m.mensagem}</p>
+                    <hr />
+                    <p>
+                      <b>Presente:</b> {presente?.nome ?? "Presente não encontrado"}
+                    </p>
+                    <p>
+                      <hr />
+                      <b>Valor: </b>
+                      {presente
+                        ? new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          }).format(presente.preco)
+                        : "Presente não encontrado"}
+                    </p>
+                  </div>
+                </div>
+              </SwiperSlide>
+            );
+          })}
+        </Swiper>
+      )}
 
       {/* Tabela de produtos */}
-<div style={{ marginBottom: 40 }}>
-  <h2>🛒 Lista de Produtos</h2>
-  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-    <thead>
-      <tr>
-        <th style={{ border: "1px solid #ccc", padding: 8, textAlign: "left" }}>Nome</th>
-        <th style={{ border: "1px solid #ccc", padding: 8, textAlign: "left" }}>Preço</th>
-        <th style={{ border: "1px solid #ccc", padding: 8, textAlign: "left" }}>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      {/** Lista de produtos */}
-      {presentes.map((p) => (
-        <tr key={p.id}>
-          <td style={{ border: "1px solid #ccc", padding: 8 }}>{p.nome}</td>
-          <td style={{ border: "1px solid #ccc", padding: 8 }}>R$ {p.preco}</td>
-          <td style={{ border: "1px solid #ccc", padding: 8 }}>
-  <button
-    onClick={() => {
-      const novoNome = prompt("Digite o novo nome do produto:", p.nome);
-      const novoPreco = prompt("Digite o novo preço do produto:", p.preco.toString());
+      <Input
+        type="text"
+        placeholder="Buscar presente..."
+        value={filtro}
+        onChange={(e) => setFiltro(e.target.value)}
+        className="w-100 mb-2"
+      />
+      <DataTable
+        title="Lista de Presentes"
+        columns={columns}
+        data={presentesFiltrados}
+        pagination
+        highlightOnHover
+        striped
+      />
 
-      if (novoNome && novoPreco) {
-        atualizarPresente({
-          ...p,
-          nome: novoNome,
-          preco: Number(novoPreco)
-        });
-      }
-    }}
-    style={{
-      padding: "4px 8px",
-      backgroundColor: "#2196f3",
-      color: "white",
-      border: "none",
-      borderRadius: 4,
-      cursor: "pointer",
-      marginRight: 8,
-    }}
-  >
-    ✏️ Editar
-  </button>
+      {/* Sessão adicionar presente */}
+      <Card className="mt-3 shadow-sm">
+        <CardBody>
+          <h2 className="mb-4">Adicionar Produto</h2>
 
-  <button
-    onClick={async () => {
-      if (confirm("Deseja realmente excluir este produto?")) {
-        try {
-          await excluirPresente(p.id!);
-        } catch (err) {
-          console.error(err);
-          alert("Erro ao excluir produto");
-        }
-      }
-    }}
-    style={{
-      padding: "4px 8px",
-      backgroundColor: "#f44336",
-      color: "white",
-      border: "none",
-      borderRadius: 4,
-      cursor: "pointer",
-    }}
-  >
-    ❌ Excluir
-  </button>
-</td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
+          <Form>
+            <Row className="g-3">
+              <Col md={8}>
+                <FormGroup>
+                  <Label>Nome do presente</Label>
+                  <Input
+                  className="bg-transparent"
+                    value={novoPresente.nome}
+                    onChange={(e) =>
+                      setNovoPresente({ ...novoPresente, nome: e.target.value })
+                    }
+                    placeholder="Ex: Jogo de panelas"
+                  />
+                </FormGroup>
+              </Col>
+                  
+              <Col md={4}>
+                <FormGroup>
+                  <Label>Preço</Label>
+                  <NumericFormat
+                    className="form-control bg-transparent"
+                    value={novoPresente.preco}
+                    onValueChange={(values) => {
+                      setNovoPresente({
+                        ...novoPresente,
+                        preco: values.floatValue || 0, // pega o valor como número
+                      });
+                    }}
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    decimalScale={2}
+                    fixedDecimalScale
+                    prefix="R$ "
+                    placeholder="0,00"
+                  />
+                </FormGroup>
+              </Col>
+                  
+              <Col md={12}>
+                <FormGroup>
+                  <Label>QR Code PIX</Label>
+                  <Input
+                    className="bg-transparent"
+                    value={novoPresente.qrCodeValue}
+                    onChange={(e) =>
+                      setNovoPresente({
+                        ...novoPresente,
+                        qrCodeValue: e.target.value,
+                      })
+                    }
+                    placeholder="Código PIX"
+                  />
+                </FormGroup>
+              </Col>
+                  
+              <Col md={12}>
+                <FormGroup>
+                  <Label>URL da imagem (opcional)</Label>
+                  <Input
+                    className="bg-transparent"
+                    value={novoPresente.imagem}
+                    onChange={(e) =>
+                      setNovoPresente({
+                        ...novoPresente,
+                        imagem: e.target.value,
+                      })
+                    }
+                    placeholder="https://..."
+                  />
+                </FormGroup>
+              </Col>
+            </Row>
+                  
+            <div className="text-end mt-3">
+              <Button
+                className="btn--purple"
+                onClick={adicionarPresente}
+              >
+                Adicionar Presente
+              </Button>
+            </div>
+          </Form>
+        </CardBody>
+      </Card>
 
-            {/* Sessão adicionar presente */}
-      <div style={{ marginBottom: 40, border: "1px solid #ccc", padding: 16, borderRadius: 8 }}>
-        <h2>➕ Adicionar Produto</h2>
+      {/* modal editar */}
+      <Modal isOpen={modalEditar} toggle={toggleModalEditar} centered size="lg">
+        <ModalHeader toggle={toggleModalEditar}>
+          Editar Presente: {presenteEditando?.nome}
+        </ModalHeader>
 
-        <input
-          type="text"
-          placeholder="Nome do presente"
-          value={novoPresente.nome}
-          onChange={(e) => setNovoPresente({ ...novoPresente, nome: e.target.value })}
-          style={{ width: "100%", padding: 8, marginBottom: 10 }}
-        />
+        <ModalBody>
+          {presenteEditando && (
+            <Row className="g-3">
+              <Col md={8}>
+                <FormGroup>
+                  <Label>Nome</Label>
+                  <Input
+                    className="bg-transparent"
+                    value={presenteEditando.nome}
+                    onChange={(e) =>
+                      setPresenteEditando({
+                        ...presenteEditando,
+                        nome: e.target.value,
+                      })
+                    }
+                  />
+                </FormGroup>
+              </Col>
+                  
+              <Col md={4}>
+                <FormGroup>
+                  <Label>Preço</Label>
+                  <NumericFormat
+                    className="form-control bg-transparent"
+                    value={presenteEditando.preco}
+                    onValueChange={(values) =>
+                      setPresenteEditando({
+                        ...presenteEditando,
+                        preco: values.floatValue || 0,
+                      })
+                    }
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    decimalScale={2}
+                    fixedDecimalScale
+                    prefix="R$ "
+                  />
+                </FormGroup>
+              </Col>
+                  
+              <Col md={12}>
+                <FormGroup>
+                  <Label>QR Code PIX</Label>
+                  <Input
+                    className="bg-transparent"
+                    value={presenteEditando.qrCodeValue}
+                    onChange={(e) =>
+                      setPresenteEditando({
+                        ...presenteEditando,
+                        qrCodeValue: e.target.value,
+                      })
+                    }
+                  />
+                </FormGroup>
+              </Col>
+                  
+              <Col md={12}>
+                <FormGroup>
+                  <Label>Imagem</Label>
+                  <Input
+                    className="bg-transparent"
+                    value={presenteEditando.imagem}
+                    onChange={(e) =>
+                      setPresenteEditando({
+                        ...presenteEditando,
+                        imagem: e.target.value,
+                      })
+                    }
+                  />
+                </FormGroup>
+              </Col>
+            </Row>
+          )}
+        </ModalBody>
+        
+        <ModalFooter>
+          <Button className="btn--purple" onClick={salvarEdicao}>
+            Salvar alterações
+          </Button>
+          <Button color="secondary" onClick={toggleModalEditar}>
+            Cancelar
+          </Button>
+        </ModalFooter>
+      </Modal>
 
-        <input
-          type="number"
-          placeholder="Preço"
-          value={novoPresente.preco}
-          onChange={(e) => setNovoPresente({ ...novoPresente, preco: Number(e.target.value) })}
-          style={{ width: "100%", padding: 8, marginBottom: 10 }}
-        />
 
-        <input
-          type="text"
-          placeholder="URL da imagem (opcional)"
-          value={novoPresente.imagem}
-          onChange={(e) => setNovoPresente({ ...novoPresente, imagem: e.target.value })}
-          style={{ width: "100%", padding: 8, marginBottom: 10 }}
-        />
+    </Container>
 
-        <input
-          type="text"
-          placeholder="qrCode"
-          value={novoPresente.qrCodeValue}
-          onChange={(e) => setNovoPresente({ ...novoPresente, qrCodeValue: e.target.value })}
-          style={{ width: "100%", padding: 8, marginBottom: 10 }}
-        />
-
-        <button
-          onClick={adicionarPresente}
-          style={{
-            padding: "8px 16px",
-            backgroundColor: "#4caf50",
-            color: "white",
-            border: "none",
-            borderRadius: 4,
-            cursor: "pointer",
-          }}
-        >
-          Adicionar Presente
-        </button>
-      </div>
-    </div>
+    
   );
 }
