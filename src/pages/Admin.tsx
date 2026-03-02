@@ -29,6 +29,7 @@ type Presente = {
   preco: number;
   imagem: string;
   qrCodeValue: string;
+  descricao: string;
   reservado: boolean;
 };
 
@@ -43,6 +44,7 @@ export default function Admin() {
     imagem: "",
     qrCodeValue: "",
     reservado: false,
+    descricao: "",
   });
   const { user, isAdmin, loading } = useAuthAdmin();
   const navigate = useNavigate();
@@ -185,6 +187,7 @@ export default function Admin() {
           imagem: "",
           qrCodeValue: "",
           reservado: false,
+          descricao: "",
         });
       } catch (e) {
         console.error(e);
@@ -371,6 +374,23 @@ export default function Admin() {
                   />
                 </FormGroup>
               </Col>
+              <Col md={12}>
+                <FormGroup>
+                  <Label>Descrição</Label>
+                  <Input
+                    type="textarea"
+                    className="bg-transparent"
+                    value={novoPresente.descricao}
+                    onChange={(e) =>
+                      setNovoPresente({
+                        ...novoPresente,
+                        descricao: e.target.value,
+                      })
+                    }
+                    placeholder="Descrição"
+                  />
+                </FormGroup>
+              </Col>
             </Row>
                   
             <div className="text-end mt-3">
@@ -457,6 +477,52 @@ export default function Admin() {
                       setPresenteEditando({
                         ...presenteEditando,
                         imagem: e.target.value,
+                      })
+                    }
+                  />
+                </FormGroup>
+              </Col>
+              <Col md={12}>
+                <FormGroup>
+                  <Label>Reservado</Label>
+                  <div>
+                    <FormGroup check inline>
+                      <Input
+                        type="radio"
+                        name="reservado"
+                        checked={presenteEditando.reservado === true}
+                        onChange={() =>
+                          setPresenteEditando({ ...presenteEditando, reservado: true })
+                        }
+                      />
+                      <Label check>Sim</Label>
+                    </FormGroup>
+                      
+                    <FormGroup check inline>
+                      <Input
+                        type="radio"
+                        name="reservado"
+                        checked={presenteEditando.reservado === false}
+                        onChange={() =>
+                          setPresenteEditando({ ...presenteEditando, reservado: false })
+                        }
+                      />
+                      <Label check>Não</Label>
+                    </FormGroup>
+                  </div>
+                </FormGroup>
+              </Col>
+              <Col md={12}>
+                <FormGroup>
+                  <Label>Descrição</Label>
+                  <Input
+                    type="textarea"
+                    className="bg-transparent"
+                    value={presenteEditando.descricao}
+                    onChange={(e) =>
+                      setPresenteEditando({
+                        ...presenteEditando,
+                        descricao: e.target.value,
                       })
                     }
                   />
