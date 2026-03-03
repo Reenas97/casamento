@@ -11,10 +11,11 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 import QRCode from "react-qr-code";
-import { Button, Container, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Spinner, Form, Tooltip, Row, Col } from "reactstrap";
+import { Button, Container, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Spinner, Form, Tooltip, Row, Col, Progress } from "reactstrap";
 import { FaHandSparkles, FaInfoCircle, FaSmile, FaSmileBeam } from "react-icons/fa";
 import { swalError, swalSuccess } from "../helpers/swalAlert";
 import qrCodePartial from "../assets/qrcode.png";
+import { NumericFormat } from "react-number-format";
 
 type Presente = {
   id: string;
@@ -25,6 +26,7 @@ type Presente = {
   descricao?: string;
   qrCodeValue: string;
   link: string;
+  valorArrecadado?: number // quanto já foi pago
 };
 
 export default function PresenteDetalhe() {
@@ -41,7 +43,8 @@ export default function PresenteDetalhe() {
   const [modoPix, setModoPix] = useState<"full" | "partial" | "externo">("full");
   const [valorParcial, setValorParcial] = useState("");
   const [tooltipOpen, setTooltipOpen] = useState(false);
-const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
+  const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
+
 
 //carregar presente
 useEffect(() => {
@@ -66,42 +69,7 @@ useEffect(() => {
   carregar();
 }, [id]);
 
-//reservar presente
-async function reservarPresente() {
-  if (!id) return;
-  setLoading(true);
-  try {
-    await runTransaction(db, async (transaction) => {
-      const ref = doc(db, "presentes", id);
-      const snap = await transaction.get(ref);
-      if (!snap.exists()) throw "Presente não existe";
-      const dados = snap.data();
-      if (dados.reservado) {
-        await swalError(
-          "Ops!",
-          "Esse presente já foi escolhido."
-        );
-        throw "Já reservado";
-      }
-      transaction.update(ref, {
-        reservado: true,
-        reservadoPor: nome || "Convidado",
-        //mensagemConvidado: mensagem || "",
-      });
-    });
-    await swalSuccess(
-      "Presente reservado!",
-      "Muito obrigada pelo carinho 💜"
-    );
-    setShowPix(false);
-    navigate("/");
-  } catch (e) {
-    console.error(e);
-  }
-  setLoading(false);
-}
-
-async function enviarEmail() {
+async function enviarEmail(valorPago: number) {
   try {
     await emailjs.send(
       "service_li6djxs",
@@ -109,7 +77,7 @@ async function enviarEmail() {
       {
         nome: nome,
         presente: presente?.nome,
-        valor: presente?.preco,
+        valor: valorPago,
         mensagem: mensagem || "Sem mensagem",
         to_email: email,
       },
@@ -119,47 +87,133 @@ async function enviarEmail() {
     console.log("Email enviado!");
   } catch (error) {
     console.error("Erro ao enviar email:", error);
+    await swalError("Ops!", "Algo deu errado.");
   }
 }
 
 // confirma PIX manualmente
 async function confirmarPix() {
-if (!nome.trim()) {
-  alert("Por favor, informe seu nome!");
-  return;
-}
+  setLoading(true);
+  let quitouPresente = false;
 
-//reservar presente
-await reservarPresente();
+  try {
+    if (!nome.trim()) {
+      alert("Por favor, informe seu nome!");
+      setLoading(false);
+      return;
+    }
 
-// salvar confirmação no Firestore
-await addDoc(collection(db, "pagamentos"), {
-  presenteId: id,
-  nomeConvidado: nome,
-  valorPago: modoPix === "full" ? presente?.preco : Number(valorParcial),
-  tipo: modoPix,
-  confirmado: true,
-  data: serverTimestamp(),
-});
+    if (modoPix === "partial" && (!valorParcial || Number(valorParcial) <= 0)) {
+      alert("Informe um valor válido para contribuir.");
+      setLoading(false);
+      return;
+    }
 
-//salvar mensagem do convidado na coleção 'mensagens'
-if (mensagem.trim()) {
-  await addDoc(collection(db, "mensagens"), {
-    presenteId: id,
-    nomeConvidado: nome,
-    mensagem: mensagem,
-    data: serverTimestamp(), // Firebase cria timestamp automático
-  });
-}
+    //atualizar arrecadação / reserva
+    await runTransaction(db, async (transaction) => {
+      if (!id) return;
+    
+      const ref = doc(db, "presentes", id);
+      const snap = await transaction.get(ref);
+    
+      if (!snap.exists()) throw "Presente não existe";
+    
+      const dados = snap.data();
+    
+      if (dados.reservado) {
+        throw new Error("Presente já reservado");
+      }
+    
+      const precoTotal = Number(dados.preco || 0);
+    
+      const valorPago =
+        modoPix === "full"
+          ? precoTotal
+          : Number(valorParcial || 0);
+    
+      const valorAtual = Number(dados.valorArrecadado || 0);
+      const novoTotal = valorAtual + valorPago;
+    
+      const updateData: any = {
+        valorArrecadado: novoTotal,
+      };
+    
+      // ✅ verifica quitação
+      quitouPresente =
+        modoPix === "full" || novoTotal >= precoTotal;
+    
+      if (quitouPresente) {
+        updateData.reservado = true;
+        updateData.reservadoPor = nome || "Convidado";
+      }
+    
+      transaction.update(ref, updateData);
+      setPresente((prev) =>
+        prev
+          ? {
+              ...prev,
+              valorArrecadado:
+                (prev.valorArrecadado || 0) + valorPago,
+              reservado: quitouPresente ? true : prev.reservado,
+            }
+          : prev
+      );
+    });
 
-await enviarEmail();
-  await swalSuccess(
-    "Pagamento confirmado!",
-    "Obrigada pelo presente 💖"
-  );
+    const valorPagoFinal =
+      modoPix === "full"
+      ? presente?.preco || 0
+      : Number(valorParcial);
+
+    // salvar confirmação no Firestore
+    await addDoc(collection(db, "pagamentos"), {
+      presenteId: id,
+      nomeConvidado: nome,
+      valorPago: valorPagoFinal,
+      tipo: modoPix,
+      confirmado: true,
+      data: serverTimestamp(),
+    });
+
+    //salvar mensagem do convidado na coleção 'mensagens'
+    if (mensagem.trim()) {
+      await addDoc(collection(db, "mensagens"), {
+        presenteId: id,
+        nomeConvidado: nome,
+        mensagem: mensagem,
+        data: serverTimestamp(), // Firebase cria timestamp automático
+      });
+    }
+
+    await enviarEmail(valorPagoFinal);
+
+    if (quitouPresente) {
+      await swalSuccess(
+        "Presente reservado! 🎁",
+        "Muito obrigada pelo carinho 💜"
+      );
+    } else {
+      await swalSuccess(
+        "Pagamento confirmado! 💖",
+        "Sua contribuição foi registrada. Obrigada!"
+      );
+    }
+  } catch (error) {
+    console.error(error);
+    await swalError("Ops!", "Não foi possível confirmar o pagamento.");
+  } finally {
+    setLoading(false);
+  }
 }
 
 if (!presente) return <p>Carregando...</p>;
+
+const valorArrecadado = presente.valorArrecadado || 0;
+const faltante = Math.max(presente.preco - valorArrecadado, 0);
+const percentual =
+  presente.preco > 0
+    ? Math.min((valorArrecadado / presente.preco) * 100, 100)
+    : 0;
 
 function abrirPixCompleto() {
   setModoPix("full");
@@ -195,58 +249,83 @@ function abrirCompraExterna() {
             }).format(presente.preco)}
           </p>
         </Col>
-        <Col xs="12" md="6" lg="6" className="mb-4 d-flex align-items-center text-center">
+        <Col xs="12" md="6" lg="6" className="mb-4">
           {presente.reservado ? (
             <h5 className="text-danger">
               Este presente já foi escolhido
             </h5>
             ) : (
-            <div className="d-flex flex-column align-items-center justify-content-center gap-3 mt-3">
-             {/* compra inteira */}
-              {!!presente.qrCodeValue?.trim() && (
-                <div>
+            <>
+                {presente.preco > 0 && (
+                  <div className="my-5 w-100">
+                    <Progress value={percentual} />
+                                
+                    <div className="d-flex justify-content-between mt-1 small text-muted">
+                      <span>
+                        Arrecadado:{" "}
+                        {new Intl.NumberFormat("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        }).format(valorArrecadado)}
+                      </span>
+                      
+                      <span>
+                        Falta:{" "}
+                        {new Intl.NumberFormat("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        }).format(faltante)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              <div className="d-flex flex-column align-items-center justify-content-center gap-3 mt-5">
+               {/* compra inteira */}
+                {!!presente.qrCodeValue?.trim() && (
+                  <div>
+                    <Button
+                      className="btn--purple d-block mx-auto"
+                      size="lg"
+                      onClick={abrirPixCompleto}
+                    >
+                      Comprar presente completo
+                    </Button>
+                    <small className="text-muted d-block mt-1">
+                      Você paga o valor total e reserva este presente para você.
+                    </small>
+                  </div>
+                )}
+                {/*compra parcial */}
+                <div className="mx-auto">
                   <Button
                     className="btn--purple d-block mx-auto"
                     size="lg"
-                    onClick={abrirPixCompleto}
+                    onClick={abrirPixParcial}
                   >
-                    Comprar presente completo
+                    Ajudar com qualquer valor
                   </Button>
                   <small className="text-muted d-block mt-1">
-                    Você paga o valor total e reserva este presente para você.
+                    Contribua com qualquer quantia. O presente continua disponível até atingir o valor total.
                   </small>
                 </div>
-              )}
-              {/*compra parcial */}
-              <div className="mx-auto">
-                <Button
-                  className="btn--purple d-block mx-auto"
-                  size="lg"
-                  onClick={abrirPixParcial}
-                >
-                  Ajudar com qualquer valor
-                </Button>
-                <small className="text-muted d-block mt-1">
-                  Contribua com qualquer quantia. O presente continua disponível até atingir o valor total.
-                </small>
+                {/* compra externa */}
+                {presente.link && (
+                  <div className="mx-auto">
+                    <Button
+                      color="secondary"
+                      size="lg"
+                      onClick={abrirCompraExterna}
+                      className="d-block mx-auto btn--purple"
+                    >
+                      Comprar no site da loja
+                    </Button>
+                    <small className="text-muted d-block mt-1">
+                      Você será direcionado para a loja para comprar este presente.
+                    </small>
+                  </div>
+                )}
               </div>
-              {/* compra externa */}
-              {presente.link && (
-                <div className="mx-auto">
-                  <Button
-                    color="secondary"
-                    size="lg"
-                    onClick={abrirCompraExterna}
-                    className="d-block mx-auto btn--purple"
-                  >
-                    Comprar no site da loja
-                  </Button>
-                  <small className="text-muted d-block mt-1">
-                    Você será direcionado para a loja para comprar este presente.
-                  </small>
-                </div>
-              )}
-            </div>
+            </>
           )}
         </Col>
         <Col xs="12" md="12" lg="12" className="mt-4">
@@ -346,13 +425,18 @@ function abrirCompraExterna() {
             {modoPix === "partial" && (
             <FormGroup>
               <Label>Com quanto você deseja contribuir?</Label>
-              <Input
-                type="number"
-                min="1"
+              <NumericFormat
                 value={valorParcial}
-                onChange={(e) => setValorParcial(e.target.value)}
+                onValueChange={(values) => {
+                  setValorParcial(values.value); // valor numérico limpo
+                }}
                 placeholder="Digite o valor"
-                className="bg-transparent"
+                className="bg-transparent form-control"
+                thousandSeparator="."
+                decimalSeparator=","
+                decimalScale={2}
+                fixedDecimalScale
+                prefix="R$ "
               />
             </FormGroup>
           )}
