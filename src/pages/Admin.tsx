@@ -32,6 +32,7 @@ type Presente = {
   descricao?: string;
   reservado: boolean;
   link?: string;
+  valorArrecadado?: number;
 };
 
 
@@ -47,6 +48,7 @@ export default function Admin() {
     reservado: false,
     descricao: "",
     link: "",
+    valorArrecadado: 0,
   });
   const { user, isAdmin, loading } = useAuthAdmin();
   const navigate = useNavigate();
@@ -191,6 +193,7 @@ export default function Admin() {
           reservado: false,
           descricao: "",
           link: "",
+          valorArrecadado: 0,
         });
       } catch (e) {
         console.error(e);
@@ -220,6 +223,7 @@ export default function Admin() {
         reservado: presenteEditando.reservado,
         link: presenteEditando.link,
         descricao: presenteEditando.descricao,
+        valorArrecadado: presenteEditando.valorArrecadado || 0
       });
 
       await swalSuccess("Produto atualizado com sucesso!");
@@ -456,7 +460,7 @@ export default function Admin() {
                 </FormGroup>
               </Col>
                   
-              <Col md={4}>
+              <Col md={2}>
                 <FormGroup>
                   <Label>Preço</Label>
                   <NumericFormat
@@ -466,6 +470,27 @@ export default function Admin() {
                       setPresenteEditando({
                         ...presenteEditando,
                         preco: values.floatValue || 0,
+                      })
+                    }
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    decimalScale={2}
+                    fixedDecimalScale
+                    prefix="R$ "
+                  />
+                </FormGroup>
+              </Col>
+
+              <Col md={2}>
+                <FormGroup>
+                  <Label>Valor Arrecadado</Label>
+                  <NumericFormat
+                    className="form-control bg-transparent"
+                    value={presenteEditando.valorArrecadado}
+                    onValueChange={(values) =>
+                      setPresenteEditando({
+                        ...presenteEditando,
+                        valorArrecadado: values.floatValue || 0,
                       })
                     }
                     thousandSeparator="."
