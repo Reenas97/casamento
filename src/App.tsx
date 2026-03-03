@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import {Container, Row, Col, Card, CardBody, CardTitle, Badge, PaginationItem, Pagination, PaginationLink } from "reactstrap";
+import {Container, Row, Col, Card, CardBody, CardTitle, Badge, PaginationItem, Pagination, PaginationLink, CardImg } from "reactstrap";
 import bannerPhoto from "../src/assets/photo_banner2.jpg";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
@@ -12,6 +12,7 @@ type Presente = {
   nome: string;
   preco: number;
   reservado: boolean;
+  imagem?: string;
 };
 
 function App() {
@@ -69,26 +70,33 @@ function App() {
           <Col key={p.id} xs="12" md="6" lg="4" className="mb-3">
             <Card
               className="h-100 present-card shadow-sm"
-              style={{ cursor: "pointer", opacity: p.reservado ? 0.8 : 1 }}
               onClick={() => navigate(`/presente/${p.id}`)}
             >
+              <div className="present-card__image-wrapper">
+                <CardImg
+                  src={p.imagem || "/placeholder.jpg"}
+                  alt={p.nome}
+                  className="present-card__img"
+                />
+                <div className="present-card__overlay" />
+                <div className="present-card__title">
+                  {p.nome}
+                </div>
+              </div>
               <CardBody>
-                <CardTitle tag="p" className="fs-5">{p.nome}</CardTitle>
-
                 <p className="fw-bold mb-2">
                   {new Intl.NumberFormat("pt-BR", {
                     style: "currency",
                     currency: "BRL",
                   }).format(p.preco)}
-                </p>
-
-                  <Badge
-                    className={`bg-transparent border ${
-                      p.reservado
-                        ? "border-danger text-danger"
-                        : "border-success text-success"
-                    }`}
-                  >
+                </p>              
+                <Badge
+                  className={`border ${
+                    p.reservado
+                      ? "border-danger"
+                      : "border-success"
+                  }`}
+                >
                   {p.reservado ? "Já escolhido" : "Disponível"}
                 </Badge>
               </CardBody>

@@ -31,6 +31,7 @@ type Presente = {
   qrCodeValue: string;
   descricao: string;
   reservado: boolean;
+  link: string;
 };
 
 
@@ -45,6 +46,7 @@ export default function Admin() {
     qrCodeValue: "",
     reservado: false,
     descricao: "",
+    link: "",
   });
   const { user, isAdmin, loading } = useAuthAdmin();
   const navigate = useNavigate();
@@ -188,6 +190,7 @@ export default function Admin() {
           qrCodeValue: "",
           reservado: false,
           descricao: "",
+          link: "",
         });
       } catch (e) {
         console.error(e);
@@ -376,6 +379,23 @@ export default function Admin() {
               </Col>
               <Col md={12}>
                 <FormGroup>
+                  <Label>Link</Label>
+                  <Input
+                    type="text"
+                    className="bg-transparent"
+                    value={novoPresente.link}
+                    onChange={(e) =>
+                      setNovoPresente({
+                        ...novoPresente,
+                        link: e.target.value,
+                      })
+                    }
+                    placeholder="Link"
+                  />
+                </FormGroup>
+              </Col>
+              <Col md={12}>
+                <FormGroup>
                   <Label>Descrição</Label>
                   <Input
                     type="textarea"
@@ -510,6 +530,22 @@ export default function Admin() {
                       <Label check>Não</Label>
                     </FormGroup>
                   </div>
+                </FormGroup>
+              </Col>
+              <Col md={12}>
+                <FormGroup>
+                  <Label>Link</Label>
+                  <Input
+                    type="text"
+                    className="bg-transparent"
+                    value={presenteEditando.link}
+                    onChange={(e) =>
+                      setPresenteEditando({
+                        ...presenteEditando,
+                        link: e.target.value,
+                      })
+                    }
+                  />
                 </FormGroup>
               </Col>
               <Col md={12}>
