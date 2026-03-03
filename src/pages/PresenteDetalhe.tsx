@@ -11,14 +11,15 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 import QRCode from "react-qr-code";
-import { Button, Container, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Spinner, Form, Tooltip } from "reactstrap";
-import { FaHandSparkles, FaInfoCircle, FaSmileBeam } from "react-icons/fa";
+import { Button, Container, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Spinner, Form, Tooltip, Row, Col } from "reactstrap";
+import { FaHandSparkles, FaInfoCircle, FaSmile, FaSmileBeam } from "react-icons/fa";
 import { swalError, swalSuccess } from "../helpers/swalAlert";
 
 type Presente = {
   id: string;
   nome: string;
   preco: number;
+  imagem: string;
   reservado: boolean;
   descricao?: string;
   qrCodeValue: string;
@@ -176,66 +177,80 @@ function abrirCompraExterna() {
 
   return (
     <Container className="py-5">
-      <h1>{presente.nome}</h1>
-      <p className="fs-3">
-        {new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        }).format(presente.preco)}
-      </p>
-      <p>{presente.descricao || "Sem descrição"}</p>
-      <hr />
-      
-      {presente.reservado ? (
-      <h5 className="text-danger">
-        Este presente já foi escolhido
-      </h5>
-      ) : (
-      <div className="d-flex flex-column align-items-center justify-content-center gap-3 mt-3">
-        {/*  compra inteira */}
-        <div>
-          <Button
-            className="btn--purple d-block mx-auto"
-            size="lg"
-            onClick={abrirPixCompleto}
-          >
-            Comprar presente completo
-          </Button>
-          <small className="text-muted d-block mt-1">
-            Você paga o valor total e reserva este presente para você.
-          </small>
-        </div>
-        {/*compra parcial */}
-        <div className="mx-auto">
-          <Button
-            className="btn--purple d-block mx-auto"
-            size="lg"
-            onClick={abrirPixParcial}
-          >
-            Ajudar com qualquer valor
-          </Button>
-          <small className="text-muted d-block mt-1">
-            Contribua com qualquer quantia. O presente continua disponível até atingir o valor total.
-          </small>
-        </div>
-        {/* compra externa */}
-        {presente.link && (
-          <div className="mx-auto">
-            <Button
-              color="secondary"
-              size="lg"
-              onClick={abrirCompraExterna}
-              className="d-block mx-auto btn--purple"
-            >
-              Comprar no site da loja
-            </Button>
-            <small className="text-muted d-block mt-1">
-              Você será direcionado para a loja para comprar este presente.
-            </small>
-          </div>
-        )}
-      </div>
-      )}
+      <Row>
+        <Col xs="12" md="12" lg="12" className="mb-3">
+          <h1>{presente.nome}</h1>
+        </Col>
+        <Col xs="12" md="6" lg="6" className="mb-4">
+          <img
+            src={presente.imagem || "/placeholder.jpg"}
+            alt={presente.nome}
+            className="present-card__img mb-3"
+          />
+          <p className="fs-3">
+            {new Intl.NumberFormat("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            }).format(presente.preco)}
+          </p>
+        </Col>
+        <Col xs="12" md="6" lg="6" className="mb-4 d-flex align-items-center text-center">
+          {presente.reservado ? (
+            <h5 className="text-danger">
+              Este presente já foi escolhido
+            </h5>
+            ) : (
+            <div className="d-flex flex-column align-items-center justify-content-center gap-3 mt-3">
+              {/*  compra inteira */}
+              <div>
+                <Button
+                  className="btn--purple d-block mx-auto"
+                  size="lg"
+                  onClick={abrirPixCompleto}
+                >
+                  Comprar presente completo
+                </Button>
+                <small className="text-muted d-block mt-1">
+                  Você paga o valor total e reserva este presente para você.
+                </small>
+              </div>
+              {/*compra parcial */}
+              <div className="mx-auto">
+                <Button
+                  className="btn--purple d-block mx-auto"
+                  size="lg"
+                  onClick={abrirPixParcial}
+                >
+                  Ajudar com qualquer valor
+                </Button>
+                <small className="text-muted d-block mt-1">
+                  Contribua com qualquer quantia. O presente continua disponível até atingir o valor total.
+                </small>
+              </div>
+              {/* compra externa */}
+              {presente.link && (
+                <div className="mx-auto">
+                  <Button
+                    color="secondary"
+                    size="lg"
+                    onClick={abrirCompraExterna}
+                    className="d-block mx-auto btn--purple"
+                  >
+                    Comprar no site da loja
+                  </Button>
+                  <small className="text-muted d-block mt-1">
+                    Você será direcionado para a loja para comprar este presente.
+                  </small>
+                </div>
+              )}
+            </div>
+          )}
+        </Col>
+        <Col xs="12" md="12" lg="12" className="mt-4">
+          <hr />
+          <p>{presente.descricao || "Sem descrição"}</p>
+        </Col>
+      </Row>
       {/* Modal PIX */}
       <Modal isOpen={showPix} toggle={togglePix} size="lg" centered backdrop="static">
         <ModalHeader toggle={togglePix} className="text-center justify-content-between" tag={'h1'}>
@@ -282,6 +297,12 @@ function abrirCompraExterna() {
                   <QRCode value={presente.qrCodeValue} size={180} />
                 </div>
               </div>
+              <p className="mt-5">
+                Ao realizar o pix, por favor, não se esqueça de preencher o formulário abaixo
+                <FaSmile
+                  style={{ marginLeft: 6, color:  '#CD67FF' }}
+                />
+              </p>
             </>
           ) : (
             <div className="text-center mb-3">
@@ -302,6 +323,12 @@ function abrirCompraExterna() {
               >
                 Ir para a loja
               </Button>
+            <p className="mt-5">
+              Ao realizar a compra do presente, por favor, não se esqueça de preencher o formulário abaixo
+              <FaSmile
+                style={{ marginLeft: 6, color:  '#CD67FF' }}
+              />
+            </p>
             </div>
           )}
           <Form>
