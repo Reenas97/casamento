@@ -14,6 +14,7 @@ import QRCode from "react-qr-code";
 import { Button, Container, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Spinner, Form, Tooltip, Row, Col } from "reactstrap";
 import { FaHandSparkles, FaInfoCircle, FaSmile, FaSmileBeam } from "react-icons/fa";
 import { swalError, swalSuccess } from "../helpers/swalAlert";
+import qrCodePartial from "../assets/qrcode.png";
 
 type Presente = {
   id: string;
@@ -201,19 +202,21 @@ function abrirCompraExterna() {
             </h5>
             ) : (
             <div className="d-flex flex-column align-items-center justify-content-center gap-3 mt-3">
-              {/*  compra inteira */}
-              <div>
-                <Button
-                  className="btn--purple d-block mx-auto"
-                  size="lg"
-                  onClick={abrirPixCompleto}
-                >
-                  Comprar presente completo
-                </Button>
-                <small className="text-muted d-block mt-1">
-                  Você paga o valor total e reserva este presente para você.
-                </small>
-              </div>
+             {/* compra inteira */}
+              {!!presente.qrCodeValue?.trim() && (
+                <div>
+                  <Button
+                    className="btn--purple d-block mx-auto"
+                    size="lg"
+                    onClick={abrirPixCompleto}
+                  >
+                    Comprar presente completo
+                  </Button>
+                  <small className="text-muted d-block mt-1">
+                    Você paga o valor total e reserva este presente para você.
+                  </small>
+                </div>
+              )}
               {/*compra parcial */}
               <div className="mx-auto">
                 <Button
@@ -289,12 +292,20 @@ function abrirCompraExterna() {
           {modoPix !== "externo" ? (
             <>
               <p>
-                Chave PIX: <b>chavepix@email.com</b>
+                Chave PIX: <b>rdbsanchez@gmail.com</b>
               </p>
 
               <div className="d-flex justify-content-center mb-3">
                 <div className="pix-container">
-                  <QRCode value={presente.qrCodeValue} size={180} />
+                  {modoPix === "full"
+                    ?
+                    <QRCode value={presente.qrCodeValue} size={180} />
+                    : 
+                    <img
+                      src={qrCodePartial}
+                      alt={'qr code'}
+                    />
+                  }
                 </div>
               </div>
               <p className="mt-5">

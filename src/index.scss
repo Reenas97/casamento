@@ -169,6 +169,9 @@ body {
     border-color: $white;
     color: $white;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.25);
+    .present-card__payment-item{
+      font-size: 14px;
+    }
     //padding: 20px;
     .badge{
       position: absolute;
@@ -180,41 +183,41 @@ body {
     }
 
     &__image-wrapper {
-    position: relative;
-    height: 220px;
-    overflow: hidden;
-  }
+      position: relative;
+      height: 220px;
+      overflow: hidden;
+    }
 
-  &__img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-  }
+    &__img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
 
-  // 🔥 overlay escuro
-  &__overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.35);
-    transition: all 0.3s ease;
-    z-index: 1;
-  }
-  &__title {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
+    //overlay escuro
+    &__overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      transition: all 0.3s ease;
+      z-index: 1;
+    }
+    &__title {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
 
-    display: flex;
-    align-items: end;
-    justify-content: start;
+      display: flex;
+      align-items: end;
+      justify-content: start;
 
-    color: #fff;
-    font-weight: bold;
-    font-size: 1.25rem;
-    text-align: center;
-    padding: 0 12px;
-  }
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.25rem;
+      text-align: center;
+      padding: 0 12px;
+    }
 
       &:hover {
       transform: translateY(-4px);
@@ -229,21 +232,21 @@ body {
     }
   }
 
-  .pagination{
-    margin: 0;
-    .page-item {
-    .page-link {
-      color: $middle-purple;
-    }
-  
-    &.active {
+    .pagination{
+      margin: 0;
+      .page-item {
       .page-link {
-        background: $middle-purple;
-        border: none;
-        color: $white;
+        color: $middle-purple;
+      }
+    
+      &.active {
+        .page-link {
+          background: $middle-purple;
+          border: none;
+          color: $white;
+        }
       }
     }
-  }
   }
 
   .modal-content{

@@ -13,6 +13,8 @@ type Presente = {
   preco: number;
   reservado: boolean;
   imagem?: string;
+  link?: string;
+  qrCodeValue?: string;
 };
 
 function App() {
@@ -66,43 +68,63 @@ function App() {
 
       <h1>Lista de Presentes</h1>
       <Row className="mt-4">
-        {presentesPaginados.map((p) => (
-          <Col key={p.id} xs="12" md="6" lg="4" className="mb-3">
-            <Card
-              className="h-100 present-card shadow-sm"
-              onClick={() => navigate(`/presente/${p.id}`)}
-            >
-              <div className="present-card__image-wrapper">
-                <CardImg
-                  src={p.imagem || "/placeholder.jpg"}
-                  alt={p.nome}
-                  className="present-card__img"
-                />
-                <div className="present-card__overlay" />
-                <div className="present-card__title">
-                  {p.nome}
+        {presentesPaginados.map((p) => {
+          //flags de pagamento
+          const temLink = !!p.link?.trim();
+          const temPix = !!p.qrCodeValue?.trim();
+        
+          const meiosPagamento = [
+            "Pagar parte do presente",
+            temLink && "Pagamento por link",
+            temPix && "Pagamento total via PIX",
+          ].filter(Boolean);
+        
+          return (
+            <Col key={p.id} xs="12" md="6" lg="4" className="mb-3">
+              <Card
+                className="h-100 present-card shadow-sm"
+                onClick={() => navigate(`/presente/${p.id}`)}
+              >
+                <div className="present-card__image-wrapper">
+                  <CardImg
+                    src={p.imagem || "/placeholder.jpg"}
+                    alt={p.nome}
+                    className="present-card__img"
+                  />
+                  <div className="present-card__overlay" />
+                  <div className="present-card__title">{p.nome}</div>
                 </div>
-              </div>
-              <CardBody>
-                <p className="fw-bold mb-2">
-                  {new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                  }).format(p.preco)}
-                </p>              
-                <Badge
-                  className={`border ${
-                    p.reservado
-                      ? "border-danger"
-                      : "border-success"
-                  }`}
-                >
-                  {p.reservado ? "Já escolhido" : "Disponível"}
-                </Badge>
-              </CardBody>
-            </Card>
-          </Col>
-        ))}
+          
+                <CardBody>
+                  <p className="fw-bold mb-2">
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(p.preco)}
+                  </p>
+                  
+                  {/*MEIOS DE PAGAMENTO */}
+                  <div className="present-card__payments mb-2">
+                    <p className="mb-0">Esse presente é possivel: </p>
+                    {meiosPagamento.map((m, i) => (
+                      <div key={i} className="present-card__payment-item">
+                        • {m}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <Badge
+                    className={`border ${
+                      p.reservado ? "border-danger" : "border-success"
+                    }`}
+                  >
+                    {p.reservado ? "Já escolhido" : "Disponível"}
+                  </Badge>
+                </CardBody>
+              </Card>
+            </Col>
+          );
+        })}
       </Row>
       {totalPaginas > 1 && (
         <Pagination className="d-flex justify-content-center mt-2">
