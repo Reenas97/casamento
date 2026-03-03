@@ -29,9 +29,9 @@ type Presente = {
   preco: number;
   imagem: string;
   qrCodeValue: string;
-  descricao: string;
+  descricao?: string;
   reservado: boolean;
-  link: string;
+  link?: string;
 };
 
 
@@ -200,7 +200,11 @@ export default function Admin() {
 
 
   function abrirModalEdicao(presente: Presente) {
-    setPresenteEditando({ ...presente });
+     setPresenteEditando({
+      ...presente,
+      descricao: presente.descricao ?? "",
+      link: presente.link ?? "",
+    });
     setModalEditar(true);
   }
 
@@ -214,6 +218,8 @@ export default function Admin() {
         imagem: presenteEditando.imagem,
         qrCodeValue: presenteEditando.qrCodeValue,
         reservado: presenteEditando.reservado,
+        link: presenteEditando.link,
+        descricao: presenteEditando.descricao,
       });
 
       await swalSuccess("Produto atualizado com sucesso!");
@@ -538,7 +544,7 @@ export default function Admin() {
                   <Input
                     type="text"
                     className="bg-transparent"
-                    value={presenteEditando.link}
+                    value={presenteEditando.link ?? ""}
                     onChange={(e) =>
                       setPresenteEditando({
                         ...presenteEditando,
@@ -554,7 +560,7 @@ export default function Admin() {
                   <Input
                     type="textarea"
                     className="bg-transparent"
-                    value={presenteEditando.descricao}
+                    value={presenteEditando.descricao ?? ""}
                     onChange={(e) =>
                       setPresenteEditando({
                         ...presenteEditando,

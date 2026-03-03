@@ -22,6 +22,7 @@ type Presente = {
   reservado: boolean;
   descricao?: string;
   qrCodeValue: string;
+  link: string;
 };
 
 export default function PresenteDetalhe() {
@@ -35,7 +36,7 @@ export default function PresenteDetalhe() {
   const [showPix, setShowPix] = useState(false);
   const [email, setEmail] = useState("");
   const togglePix = () => setShowPix(!showPix);
-  const [modoPix, setModoPix] = useState<"full" | "partial">("full");
+  const [modoPix, setModoPix] = useState<"full" | "partial" | "externo">("full");
   const [valorParcial, setValorParcial] = useState("");
   const [tooltipOpen, setTooltipOpen] = useState(false);
 const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
@@ -168,6 +169,11 @@ function abrirPixParcial() {
   setShowPix(true);
 }
 
+function abrirCompraExterna() {
+  setModoPix("externo");
+  setShowPix(true);
+}
+
   return (
     <Container className="py-5">
       <h1>{presente.nome}</h1>
@@ -212,6 +218,22 @@ function abrirPixParcial() {
             Contribua com qualquer quantia. O presente continua disponível até atingir o valor total.
           </small>
         </div>
+        {/* compra externa */}
+        {presente.link && (
+          <div className="mx-auto">
+            <Button
+              color="secondary"
+              size="lg"
+              onClick={abrirCompraExterna}
+              className="d-block mx-auto btn--purple"
+            >
+              Comprar no site da loja
+            </Button>
+            <small className="text-muted d-block mt-1">
+              Você será direcionado para a loja para comprar este presente.
+            </small>
+          </div>
+        )}
       </div>
       )}
       {/* Modal PIX */}
@@ -219,7 +241,10 @@ function abrirPixParcial() {
         <ModalHeader toggle={togglePix} className="text-center justify-content-between" tag={'h1'}>
           {modoPix === "full"
             ? "Fazer o PIX do valor inteiro"
-            : "Contribuir com este presente"}
+            : modoPix === "partial"
+            ? "Contribuir com este presente"
+            : "Comprar na loja"
+          }
             {modoPix === "full" && (
               <>
                 <FaInfoCircle
@@ -246,14 +271,39 @@ function abrirPixParcial() {
           )}
         </ModalHeader>
         <ModalBody className="text-center">
-          <p>
-            Chave PIX: <b>chavepix@email.com</b>
-          </p>
-          <div className="d-flex justify-content-center mb-3">
-            <div className="pix-container">
-              <QRCode value={presente.qrCodeValue} size={180} />
+          {modoPix !== "externo" ? (
+            <>
+              <p>
+                Chave PIX: <b>chavepix@email.com</b>
+              </p>
+
+              <div className="d-flex justify-content-center mb-3">
+                <div className="pix-container">
+                  <QRCode value={presente.qrCodeValue} size={180} />
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="text-center mb-3">
+              <p className="fs-5">
+                Você será redirecionado para a loja para comprar este presente 💜
+              </p>
+          
+              <p className="text-muted">
+                Ao escolher esse modo, entre em contato com os noivos para combinar a etrega.
+              </p>
+          
+              <Button
+                size="lg"
+                href={presente.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 btn--purple"
+              >
+                Ir para a loja
+              </Button>
             </div>
-          </div>
+          )}
           <Form>
             {modoPix === "partial" && (
             <FormGroup>
@@ -305,7 +355,11 @@ function abrirPixParcial() {
             onClick={confirmarPix}
             disabled={loading}
           >
-            {loading ? <Spinner size="sm" /> : "Confirmar PIX"}
+            {loading
+              ? <Spinner size="sm" />
+              : modoPix === "externo"
+              ? "Já comprei"
+              : "Confirmar PIX"}
           </Button>
           <Button color="secondary" onClick={togglePix} disabled={loading}>
             Cancelar
