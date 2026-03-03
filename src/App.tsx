@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import {Container, Row, Col, Card, CardBody, CardTitle, Badge, PaginationItem, Pagination, PaginationLink, CardImg } from "reactstrap";
+import {Container, Row, Col, Card, CardBody, Badge, PaginationItem, Pagination, PaginationLink, CardImg } from "reactstrap";
 import bannerPhoto from "../src/assets/photo_banner2.jpg";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
