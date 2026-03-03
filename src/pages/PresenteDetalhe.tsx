@@ -31,8 +31,6 @@ type Presente = {
 
 export default function PresenteDetalhe() {
   const { id } = useParams();
-  const navigate = useNavigate();
-
   const [presente, setPresente] = useState<Presente | null>(null);
   const [nome, setNome] = useState("");
   const [mensagem, setMensagem] = useState("");
