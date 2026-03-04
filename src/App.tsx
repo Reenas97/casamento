@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import {Container, Row, Col, Card, CardBody, Badge, PaginationItem, Pagination, PaginationLink, CardImg } from "reactstrap";
+import {Container, Row, Col, Card, CardBody, Badge, PaginationItem, Pagination, PaginationLink, CardImg, Progress } from "reactstrap";
 import bannerPhoto from "../src/assets/photo_banner2.jpg";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
@@ -15,6 +15,7 @@ type Presente = {
   imagem?: string;
   link?: string;
   qrCodeValue?: string;
+  valorArrecadado?: number; 
 };
 
 function App() {
@@ -74,10 +75,21 @@ function App() {
           const temPix = !!p.qrCodeValue?.trim();
         
           const meiosPagamento = [
-            "Pagar parte do presente",
-            temLink && "Pagamento por link",
+            "Ajudar com qualquer valor",
+            temLink && "Comprar na loja",
             temPix && "Pagamento total via PIX",
           ].filter(Boolean);
+
+          //progresso do presente
+          const valorArrecadado = Number(p.valorArrecadado || 0);
+          const precoTotal = Number(p.preco || 0);
+
+          const porcentagem =
+            precoTotal > 0
+              ? Math.min((valorArrecadado / precoTotal) * 100, 100)
+              : 0;
+
+          const faltante = Math.max(precoTotal - valorArrecadado, 0);
         
           return (
             <Col key={p.id} xs="12" md="6" lg="4" className="mb-3">
@@ -102,10 +114,37 @@ function App() {
                       currency: "BRL",
                     }).format(p.preco)}
                   </p>
+
+                  {/* PROGRESSO */}
+                  <div className="mb-2">
+                    <small className="text-white">
+                      Arrecadado:{" "}
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(valorArrecadado)}
+                    </small>
+                    
+                    <Progress
+                      value={porcentagem}
+                      className="mt-1"
+                      style={{ height: "8px" }}
+                    />
+                  
+                    {faltante > 0 && (
+                      <small className="text-white">
+                        Falta:{" "}
+                        {new Intl.NumberFormat("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        }).format(faltante)}
+                      </small>
+                    )}
+                  </div>
                   
                   {/*MEIOS DE PAGAMENTO */}
                   <div className="present-card__payments mb-2">
-                    <p className="mb-0">Esse presente é possivel: </p>
+                    <p className="mb-0">Para esse presente é possível: </p>
                     {meiosPagamento.map((m, i) => (
                       <div key={i} className="present-card__payment-item">
                         • {m}
