@@ -23,6 +23,47 @@ function App() {
   const navigate = useNavigate();
   const itensPorPagina = 12;
   const [paginaAtual, setPaginaAtual] = useState(1);
+  const [filtroPagamento, setFiltroPagamento] = useState<string>("todos");
+  const [filtroValor, setFiltroValor] = useState<string>("todos");
+  const [filtroFaltante, setFiltroFaltante] = useState<string>("todos");
+
+  const presentesFiltrados = presentes.filter((p) => {
+    const temLink = !!p.link?.trim();
+    const temPix = !!p.qrCodeValue?.trim();
+
+    const valorArrecadado = Number(p.valorArrecadado || 0);
+    const precoTotal = Number(p.preco || 0);
+    const faltante = Math.max(precoTotal - valorArrecadado, 0);
+
+    //filtro por pagamento
+    if (filtroPagamento === "pix" && !temPix) return false;
+    if (filtroPagamento === "link" && !temLink) return false;
+    if (filtroPagamento === "parcial" && precoTotal <= 0) return false;
+    
+    //filtro por valor
+    if (filtroValor === "ate100" && precoTotal > 100) return false;
+    if (filtroValor === "100a300" && (precoTotal < 100 || precoTotal > 300)) return false;
+    if (filtroValor === "acima300" && precoTotal <= 300) return false;
+
+    //filtro por faltante
+    if (filtroFaltante === "quitado" && faltante > 0) return false;
+    if (filtroFaltante === "faltando" && faltante === 0) return false;
+
+    return true;
+  });
+
+
+  const indexUltimo = paginaAtual * itensPorPagina;
+  const indexPrimeiro = indexUltimo - itensPorPagina;
+
+  const presentesPaginados = presentesFiltrados.slice(
+    indexPrimeiro,
+    indexUltimo
+  );
+
+  const totalPaginas = Math.ceil(
+    presentesFiltrados.length / itensPorPagina
+  );
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "presentes"), (snapshot) => {
@@ -39,13 +80,7 @@ function App() {
 
 
 
-
-  const indexUltimo = paginaAtual * itensPorPagina;
-  const indexPrimeiro = indexUltimo - itensPorPagina;
-
-  const presentesPaginados = presentes.slice(indexPrimeiro, indexUltimo);
-
-  const totalPaginas = Math.ceil(presentes.length / itensPorPagina);
+  //const totalPaginas = Math.ceil(presentes.length / itensPorPagina);
 
 
 
@@ -69,6 +104,55 @@ function App() {
 
       <h1>Lista de Presentes</h1>
       <Row className="mt-4">
+        {/* filtro pagamento */}
+        <Col md="4">
+          <select
+            className="form-select"
+            value={filtroPagamento}
+            onChange={(e) => {
+              setFiltroPagamento(e.target.value);
+              setPaginaAtual(1);
+            }}
+          >
+            <option value="todos">Todos pagamentos</option>
+            <option value="pix">PIX total</option>
+            <option value="link">Comprar na loja</option>
+            <option value="parcial">Ajuda parcial</option>
+          </select>
+        </Col>
+            
+        {/* filtro valor */}
+        <Col md="4">
+          <select
+            className="form-select"
+            value={filtroValor}
+            onChange={(e) => {
+              setFiltroValor(e.target.value);
+              setPaginaAtual(1);
+            }}
+          >
+            <option value="todos">Todos valores</option>
+            <option value="ate100">Até R$100</option>
+            <option value="100a300">R$100 a R$300</option>
+            <option value="acima300">Acima de R$300</option>
+          </select>
+        </Col>
+            
+        {/* filtro faltante */}
+        <Col md="4">
+          <select
+            className="form-select"
+            value={filtroFaltante}
+            onChange={(e) => {
+              setFiltroFaltante(e.target.value);
+              setPaginaAtual(1);
+            }}
+          >
+            <option value="todos">Todos status</option>
+            <option value="faltando">Ainda faltando</option>
+            <option value="quitado">Já quitado</option>
+          </select>
+        </Col>
         {presentesPaginados.map((p) => {
           //flags de pagamento
           const temLink = !!p.link?.trim();
