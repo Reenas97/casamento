@@ -168,6 +168,12 @@ body {
       color: $middle-purple;
     }
   }
+  
+  .progress{
+    .progress-bar{
+      background: $middle-purple;
+    }
+  }
 
   .present-card {
     cursor: pointer;

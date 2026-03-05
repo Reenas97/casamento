@@ -33,12 +33,13 @@ function App() {
 
     const valorArrecadado = Number(p.valorArrecadado || 0);
     const precoTotal = Number(p.preco || 0);
-    const faltante = Math.max(precoTotal - valorArrecadado, 0);
+    //const faltante = Math.max(precoTotal - valorArrecadado, 0);
     const porcentagem =
     precoTotal > 0 ? (valorArrecadado / precoTotal) * 100 : 0;
 
     //filtro por pagamento
-    if (filtroPagamento === "pix" && !temPix) return false;
+    if (filtroPagamento === "pix" && (!temPix || valorArrecadado > 0))
+      return false;
     if (filtroPagamento === "link" && !temLink) return false;
     if (filtroPagamento === "parcial" && precoTotal <= 0) return false;
     
