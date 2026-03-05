@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-import {Container, Row, Col, Card, CardBody, Badge, PaginationItem, Pagination, PaginationLink, CardImg, Progress } from "reactstrap";
+import {Container, Row, Col, Card, CardBody, Badge, PaginationItem, Pagination, PaginationLink, CardImg, Progress, Label, Input } from "reactstrap";
 import bannerPhoto from "../src/assets/photo_banner2.jpg";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
@@ -34,6 +34,8 @@ function App() {
     const valorArrecadado = Number(p.valorArrecadado || 0);
     const precoTotal = Number(p.preco || 0);
     const faltante = Math.max(precoTotal - valorArrecadado, 0);
+    const porcentagem =
+    precoTotal > 0 ? (valorArrecadado / precoTotal) * 100 : 0;
 
     //filtro por pagamento
     if (filtroPagamento === "pix" && !temPix) return false;
@@ -42,14 +44,33 @@ function App() {
     
     //filtro por valor
     if (filtroValor === "ate100" && precoTotal > 100) return false;
-    if (filtroValor === "100a300" && (precoTotal < 100 || precoTotal > 300)) return false;
-    if (filtroValor === "acima300" && precoTotal <= 300) return false;
+
+    if (filtroValor === "100a300" && (precoTotal < 100 || precoTotal > 300))
+      return false;
+
+    if (filtroValor === "300a500" && (precoTotal < 300 || precoTotal > 500))
+      return false;
+
+    if (filtroValor === "500a1000" && (precoTotal < 500 || precoTotal > 1000))
+      return false;
+
+    if (filtroValor === "acima1000" && precoTotal <= 1000)
+      return false;
 
     //filtro por faltante
-    if (filtroFaltante === "quitado" && faltante > 0) return false;
-    if (filtroFaltante === "faltando" && faltante === 0) return false;
+    if (filtroFaltante === "naoIniciado" && valorArrecadado > 0)
+      return false;
 
-    return true;
+    if (filtroFaltante === "iniciado" && valorArrecadado === 0)
+      return false;
+
+    if (filtroFaltante === "menos50" && porcentagem < 50)
+      return false;
+
+    if (filtroFaltante === "mais50" && porcentagem >= 50)
+      return false;
+
+      return true;
   });
 
 
@@ -105,68 +126,79 @@ function App() {
       <h1>Lista de Presentes</h1>
       <Row className="mt-4">
         {/* filtro pagamento */}
-        <Col md="4">
-          <select
+        <Col md="4" className="mb-3 filter">
+            <Label>Filtro por forma de pagamento do presente: </Label>
+          <Input
             className="form-select"
+            type="select"
             value={filtroPagamento}
             onChange={(e) => {
               setFiltroPagamento(e.target.value);
               setPaginaAtual(1);
             }}
           >
-            <option value="todos">Todos pagamentos</option>
-            <option value="pix">PIX total</option>
+            <option value="todos">Todas as formas de pagamento</option>
+            <option value="pix">PIX do valor total</option>
             <option value="link">Comprar na loja</option>
-            <option value="parcial">Ajuda parcial</option>
-          </select>
+            <option value="parcial">Ajuda com pix de qualquer valor</option>
+          </Input>
         </Col>
             
         {/* filtro valor */}
-        <Col md="4">
-          <select
+        <Col md="4" className="mb-3 filter">
+          <Label>Filtro por valor do presente: </Label>
+          <Input
             className="form-select"
+            type="select"
             value={filtroValor}
             onChange={(e) => {
               setFiltroValor(e.target.value);
               setPaginaAtual(1);
             }}
           >
-            <option value="todos">Todos valores</option>
+            <option value="todos">Todos os valores</option>
             <option value="ate100">Até R$100</option>
             <option value="100a300">R$100 a R$300</option>
-            <option value="acima300">Acima de R$300</option>
-          </select>
+            <option value="300a500">R$300 a R$500</option>
+            <option value="500a1000">R$500 a R$1000</option>
+            <option value="acima1000">Acima de R$1000</option>
+          </Input>
         </Col>
             
         {/* filtro faltante */}
-        <Col md="4">
-          <select
+        <Col md="4" className="mb-3 filter">
+          <Label>Filtro por quanto falta pagar do presente: </Label>
+          <Input
             className="form-select"
+            type="select"
             value={filtroFaltante}
             onChange={(e) => {
               setFiltroFaltante(e.target.value);
               setPaginaAtual(1);
             }}
           >
-            <option value="todos">Todos status</option>
-            <option value="faltando">Ainda faltando</option>
-            <option value="quitado">Já quitado</option>
-          </select>
+            <option value="todos">Todos os status</option>
+            <option value="naoIniciado">Pagamento não iniciado</option>
+            <option value="iniciado">Pagamento iniciado</option>
+            <option value="menos50">Falta menos de 50%</option>
+            <option value="mais50">Falta mais de 50%</option>
+          </Input>
         </Col>
         {presentesPaginados.map((p) => {
           //flags de pagamento
           const temLink = !!p.link?.trim();
           const temPix = !!p.qrCodeValue?.trim();
-        
-          const meiosPagamento = [
-            "Ajudar com qualquer valor",
-            temLink && "Comprar na loja",
-            temPix && "Pagamento total via PIX",
-          ].filter(Boolean);
 
           //progresso do presente
           const valorArrecadado = Number(p.valorArrecadado || 0);
           const precoTotal = Number(p.preco || 0);
+
+          const meiosPagamento = [
+            "Ajudar com qualquer valor",
+            temLink && "Comprar na loja",
+            temPix && valorArrecadado === 0 && "Pagamento total via PIX",
+          ].filter(Boolean);
+
 
           const porcentagem =
             precoTotal > 0

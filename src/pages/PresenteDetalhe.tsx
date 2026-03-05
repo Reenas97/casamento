@@ -208,6 +208,7 @@ if (!presente) return <p>Carregando...</p>;
 
 const valorArrecadado = presente.valorArrecadado || 0;
 const faltante = Math.max(presente.preco - valorArrecadado, 0);
+const pixColetivoIniciado = valorArrecadado > 0;
 const percentual =
   presente.preco > 0
     ? Math.min((valorArrecadado / presente.preco) * 100, 100)
@@ -279,7 +280,7 @@ function abrirCompraExterna() {
                 )}
               <div className="d-flex flex-column align-items-center justify-content-center gap-3 mt-5">
                {/* compra inteira */}
-                {!!presente.qrCodeValue?.trim() && (
+                {!!presente.qrCodeValue?.trim() && !pixColetivoIniciado && (
                   <div>
                     <Button
                       className="btn--purple d-block mx-auto"

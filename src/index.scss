@@ -159,6 +159,16 @@ body {
     }
   }
 
+  .filter{
+    select{
+      border: 1px solid $middle-purple;
+      background: transparent;
+    }
+    label{
+      color: $middle-purple;
+    }
+  }
+
   .present-card {
     cursor: pointer;
     position: relative;
