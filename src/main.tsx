@@ -4,6 +4,7 @@ import PresenteDetalhe from "./pages/PresenteDetalhe";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Admin from "./pages/Admin";
+import Confirmacao from "./pages/Confirmacao";
 import ImportPresentes from "./helpers/ImportPresentes";
 import MainLayout from "./layouts/MainLayout";
 
@@ -23,6 +24,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/presente/:id" element={<PresenteDetalhe />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/confirmacao" element={<Confirmacao />} />
         <Route path="/import-presentes" element={<ImportPresentes />} />
       </Route>
     </Routes>
