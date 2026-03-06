@@ -50,6 +50,16 @@ body {
     color: $white;
     text-align: center;
   }
+  .bg--blue{
+    background: #A4C5FE;
+  }
+
+  .foto-casal {
+    width: 100%;
+    height: 500px;
+    object-fit: cover;
+  }
+  
   .btn {
     border: none;
     box-shadow: 0 0.5rem 1.2rem rgba(0, 0, 0, 0.1);
