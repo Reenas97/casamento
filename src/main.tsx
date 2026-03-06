@@ -14,6 +14,7 @@ import "./index.scss";
 import 'swiper/css';
 import 'swiper/css/pagination';
 import "swiper/css/navigation";
+import ListaPresentes from "./pages/ListaPresentes";
 
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/login" element={<Login />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/confirmacao" element={<Confirmacao />} />
+        <Route path="/lista" element={<ListaPresentes />} />
         <Route path="/import-presentes" element={<ImportPresentes />} />
       </Route>
     </Routes>
