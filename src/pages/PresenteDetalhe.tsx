@@ -400,7 +400,7 @@ function abrirCompraExterna() {
               </p>
           
               <p className="text-muted">
-                Ao escolher esse modo, entre em contato com os noivos para combinar a etrega.
+                Ao escolher esse modo, entre em contato com os noivos para combinar a entrega.
               </p>
           
               <Button

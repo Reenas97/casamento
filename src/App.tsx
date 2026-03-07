@@ -38,7 +38,7 @@ function App() {
             <br /><br />
             Aqui no nosso site você encontrará nossa lista de presentes, dicas e informações sobre o local do casamento, além de um espaço para confirmar sua presença.
             <br /><br />
-            Sua presença tornará esse dia ainda mais especial para nós!
+            Contamos com sua presença, ela tornará esse dia ainda mais especial para nós!
           </p>
         </Col>
       </Row>
