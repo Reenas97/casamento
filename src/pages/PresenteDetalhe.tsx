@@ -201,6 +201,7 @@ async function confirmarPix() {
     await swalError("Ops!", "Não foi possível confirmar o pagamento.");
   } finally {
     setLoading(false);
+    setShowPix(false); 
   }
 }
 
