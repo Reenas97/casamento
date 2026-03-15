@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Navbar,
@@ -20,6 +20,7 @@ export default function Header() {
 
   const navigate = useNavigate();
   const { user, isAdmin } = useAuthAdmin();
+  const [scrolled, setScrolled] = useState(false);
 
   function handleAdminClick() {
     if (!user) {
@@ -29,8 +30,23 @@ export default function Header() {
     }
   }
 
+  useEffect(() => {
+    function handleScroll() {
+      setScrolled(window.scrollY > 50);
+    }
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <Navbar expand="md" fixed="top" light className="header shadow-sm">
+    <Navbar
+      expand="md"
+      fixed="top"
+      light
+      className={`header shadow-sm ${scrolled ? "header--scrolled" : ""}`}
+    >
       <Container className="d-flex">
         {/* Logo */}
         <NavbarBrand
