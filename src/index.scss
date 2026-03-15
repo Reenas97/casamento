@@ -117,9 +117,9 @@ body {
     }
   }
   .photo-banner {
-    height: 60vh;
+    height: 75vh;
 
-    background-position-y: 40%;
+    background-position-y: 64%;
     background-position-x: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
@@ -135,7 +135,7 @@ body {
       content: "";
       position: absolute;
       inset: 0;
-      background: rgba(255, 255, 255, 0.3); // 👈 ajuste a transparência
+      background: rgba(255, 255, 255, 0.4);
       z-index: 1;
     }
 

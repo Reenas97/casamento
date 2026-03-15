@@ -1,5 +1,5 @@
 import {Col, Container, Row} from "reactstrap";
-import bannerPhoto from "../src/assets/photo_banner2.jpg";
+import bannerPhoto from "../src/assets/photo_banner2.jpeg";
 import nossaFoto from "../src/assets/nossa-foto.jpg";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
