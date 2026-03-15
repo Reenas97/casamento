@@ -159,7 +159,7 @@ async function confirmarPix() {
     });
 
     const valorPagoFinal =
-      modoPix === "full"
+      modoPix === "full" || modoPix === "externo"
       ? presente?.preco || 0
       : Number(valorParcial);
 
