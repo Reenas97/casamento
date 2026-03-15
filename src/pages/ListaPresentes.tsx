@@ -81,9 +81,13 @@ export default function ListaPresentes() {
     const indisponivelA = a.reservado || (a.valorArrecadado ?? 0) >= a.preco;
     const indisponivelB = b.reservado || (b.valorArrecadado ?? 0) >= b.preco;
 
-    if (indisponivelA === indisponivelB) return 0;
-    if (indisponivelA) return 1; // joga pro final
-    return -1;
+    //primeiro separa disponíveis de indisponíveis
+    if (indisponivelA !== indisponivelB) {
+      return indisponivelA ? 1 : -1;
+    }
+
+    //depois ordena alfabeticamente
+    return a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" });
   });
 
 
