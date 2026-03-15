@@ -3,7 +3,8 @@ import { db } from "../firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
-import { Container, Row, Col, Card, CardBody, Badge, PaginationItem, Pagination, PaginationLink, CardImg, Progress, Label, Input  } from "reactstrap";
+import { Container, Row, Col, Card, CardBody, Badge, PaginationItem, Pagination, PaginationLink, CardImg, Progress, Label, Input, Tooltip  } from "reactstrap";
+import { FiInfo } from "react-icons/fi";
 
 type Presente = {
   id: string;
@@ -14,6 +15,7 @@ type Presente = {
   link?: string;
   qrCodeValue?: string;
   valorArrecadado?: number; 
+  descricao?: string;
 };
 
 
@@ -26,6 +28,8 @@ export default function ListaPresentes() {
   const [filtroPagamento, setFiltroPagamento] = useState<string>("todos");
   const [filtroValor, setFiltroValor] = useState<string>("todos");
   const [filtroFaltante, setFiltroFaltante] = useState<string>("todos");
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
 
   const presentesFiltrados = presentes.filter((p) => {
     const temLink = !!p.link?.trim();
@@ -103,10 +107,37 @@ export default function ListaPresentes() {
 
   //const totalPaginas = Math.ceil(presentes.length / itensPorPagina);
 
-
   return (
     <Container className="py-5 my-5">
-            <h1>Lista de Presentes</h1>
+      <h1 className="d-flex align-items-center justify-content-center gap-3">
+        Lista de Presentes
+        <span
+          id="infoPresentes"
+          style={{ cursor: "pointer", fontSize: "18px" }}
+        >
+          <FiInfo size={50}  className="icon-info"/>
+        </span>
+      </h1>
+
+      <Tooltip
+        placement="right"
+        isOpen={tooltipOpen}
+        target="infoPresentes"
+        toggle={toggleTooltip}
+      >
+        <div style={{ textAlign: "left" }}>
+          <strong>Formas de presentear:</strong>
+          <br /><br />
+          <span className="dot--pix-parcial tooltip-dot"></span>
+          <b>Pix parcial</b>: você pode contribuir com qualquer valor.
+          <br />
+          <span className="dot--pix-total tooltip-dot"></span>
+          <b>Pix total</b>: pagar o valor completo do presente via Pix.
+          <br />
+          <span className="dot--loja tooltip-dot"></span>
+          <b>Loja</b>: comprar o presente diretamente na loja.
+        </div>
+      </Tooltip>
       <Row className="mt-4">
         {/* filtro pagamento */}
         <Col md="4" className="mb-3 filter">
@@ -188,6 +219,22 @@ export default function ListaPresentes() {
             ].filter(Boolean);
           }
 
+          let tagsPagamento: string[] = [];
+
+          meiosPagamento.forEach((m) => {
+            if (m === "Ajudar com qualquer valor") {
+              tagsPagamento.push("Pix parcial");
+            }
+          
+            if (m === "Pagamento total via PIX") {
+              tagsPagamento.push("Pix total");
+            }
+          
+            if (m === "Comprar na loja") {
+              tagsPagamento.push("Loja");
+            }
+          });
+
 
           const porcentagem =
             precoTotal > 0
@@ -196,6 +243,8 @@ export default function ListaPresentes() {
 
           const faltante = Math.max(precoTotal - valorArrecadado, 0);
           const indisponivel = p.reservado || valorArrecadado >= precoTotal;
+
+          console.log(p.nome, indisponivel, tagsPagamento)
         
           return (
             <Col key={p.id} xs="12" md="6" lg="4" className="mb-3">
@@ -214,12 +263,32 @@ export default function ListaPresentes() {
                 </div>
           
                 <CardBody>
-                  <p className="fw-bold mb-2">
-                    {new Intl.NumberFormat("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    }).format(p.preco)}
-                  </p>
+                  <div className="d-flex align-items-center justify-content-between mb-2">
+                    <p className="fw-bold mb-0">
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(p.preco)}
+                    </p>
+                    {/*MEIOS DE PAGAMENTO */}
+                    {!indisponivel && (
+                      <div className="d-flex gap-1 flex-wrap">
+                        {tagsPagamento.map((tag, i) => {
+                          let badgeClass = "";
+
+                          if (tag === "Pix parcial") badgeClass = "badge--pix-parcial";
+                          if (tag === "Pix total") badgeClass = "badge--pix-total";
+                          if (tag === "Loja") badgeClass = "badge--loja";
+
+                          return (
+                            <Badge key={i} pill className={badgeClass}>
+                              {tag}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
 
                   {/* PROGRESSO */}
                   <div className="mb-2">
@@ -247,25 +316,15 @@ export default function ListaPresentes() {
                       </small>
                     )}
                   </div>
-                  
-                  {/*MEIOS DE PAGAMENTO */}
-                  {!indisponivel && (
-                    <div className="present-card__payments mb-2">
-                      <p className="mb-0">Para esse presente é possível: </p>
-                      {meiosPagamento.map((m, i) => (
-                        <div key={i} className="present-card__payment-item">
-                          • {m}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+
+                  <p>{p.descricao}</p>
                   
                   <Badge
                     className={`border ${
                       p.reservado || valorArrecadado >= precoTotal
                         ? "border-danger"
                         : "border-success"
-                    }`}
+                    } badge--disponibility`}
                   >
                     {p.reservado || valorArrecadado >= precoTotal
                       ? "Indisponível"
