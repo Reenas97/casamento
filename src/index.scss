@@ -91,8 +91,9 @@ body {
 
   .foto-casal {
     width: 100%;
-    height: 500px;
+    height: 600px;
     object-fit: cover;
+    object-position: center 70%;
   }
   
   .btn {
@@ -134,7 +135,7 @@ body {
       content: "";
       position: absolute;
       inset: 0;
-      background: rgba(255, 255, 255, 0.5); // 👈 ajuste a transparência
+      background: rgba(255, 255, 255, 0.3); // 👈 ajuste a transparência
       z-index: 1;
     }
 

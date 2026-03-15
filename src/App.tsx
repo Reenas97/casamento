@@ -3,12 +3,13 @@ import bannerPhoto from "../src/assets/photo_banner2.jpg";
 import nossaFoto from "../src/assets/nossa-foto.jpg";
 import FlipClockCountdown from "@leenguyen/react-flip-clock-countdown";
 import "@leenguyen/react-flip-clock-countdown/dist/index.css";
+import { HiOutlineEmojiHappy } from "react-icons/hi";
 
 function App() {
   return (
       <Container>
       <div
-        className="photo-banner"
+        className="photo-banner mt-5"
         style={{ backgroundImage: `url(${bannerPhoto})` }}
       >
         <h1 className="banner-title">Renata & Pedro</h1>
@@ -37,6 +38,8 @@ function App() {
             Ficaremos muito felizes em ter você presente no nosso grande dia e mal podemos esperar para compartilhar esse momento tão especial ao seu lado!
             <br /><br />
             Aqui no nosso site você encontrará nossa lista de presentes, dicas e informações sobre o local do casamento, além de um espaço para confirmar sua presença.
+            <br /><br />
+            Se tiver alguma dúvida, entre em contato com os noivos. <HiOutlineEmojiHappy size={25}/>
             <br /><br />
             Contamos com sua presença, ela tornará esse dia ainda mais especial para nós!
           </p>
