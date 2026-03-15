@@ -77,11 +77,20 @@ export default function ListaPresentes() {
       return true;
   });
 
+  const presentesOrdenados = [...presentesFiltrados].sort((a, b) => {
+    const indisponivelA = a.reservado || (a.valorArrecadado ?? 0) >= a.preco;
+    const indisponivelB = b.reservado || (b.valorArrecadado ?? 0) >= b.preco;
+
+    if (indisponivelA === indisponivelB) return 0;
+    if (indisponivelA) return 1; // joga pro final
+    return -1;
+  });
+
 
   const indexUltimo = paginaAtual * itensPorPagina;
   const indexPrimeiro = indexUltimo - itensPorPagina;
 
-  const presentesPaginados = presentesFiltrados.slice(
+  const presentesPaginados = presentesOrdenados.slice(
     indexPrimeiro,
     indexUltimo
   );
@@ -249,8 +258,10 @@ export default function ListaPresentes() {
           return (
             <Col key={p.id} xs="12" md="6" lg="4" className="mb-3">
               <Card
-                className="h-100 present-card shadow-sm"
-                onClick={() => navigate(`/presente/${p.id}`)}
+                className={`h-100 present-card shadow-sm ${
+                  indisponivel ? "present-card--disabled" : ""
+                }`}
+                onClick={() => !indisponivel && navigate(`/presente/${p.id}`)}
               >
                 <div className="present-card__image-wrapper">
                   <CardImg
@@ -292,7 +303,7 @@ export default function ListaPresentes() {
 
                   {/* PROGRESSO */}
                   <div className="mb-2">
-                    <small className="text-white">
+                    <small className="text-black fw-bold">
                       Arrecadado:{" "}
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
@@ -307,7 +318,7 @@ export default function ListaPresentes() {
                     />
                   
                     {faltante > 0 && (
-                      <small className="text-white">
+                      <small className="text-black fw-bold">
                         Falta:{" "}
                         {new Intl.NumberFormat("pt-BR", {
                           style: "currency",

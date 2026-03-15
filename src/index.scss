@@ -230,6 +230,13 @@ body {
     border-color: $white;
     color: $white;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.25);
+
+      &--disabled {
+        filter: grayscale(90%);
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    
     .present-card__payment-item{
       font-size: 14px;
     }
