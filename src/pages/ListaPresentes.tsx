@@ -40,8 +40,7 @@ export default function ListaPresentes() {
     //filtro por pagamento
     if (filtroPagamento === "pix" && (!temPix || valorArrecadado > 0))
       return false;
-    if (filtroPagamento === "link" && !temLink) return false;
-    if (filtroPagamento === "parcial" && precoTotal <= 0) return false;
+    if (filtroPagamento === "link" && (!temLink || valorArrecadado > 0)) return false;
     
     //filtro por valor
     if (filtroValor === "ate100" && precoTotal > 100) return false;
@@ -177,11 +176,17 @@ export default function ListaPresentes() {
           const valorArrecadado = Number(p.valorArrecadado || 0);
           const precoTotal = Number(p.preco || 0);
 
-          const meiosPagamento = [
-            "Ajudar com qualquer valor",
-            temLink && "Comprar na loja",
-            temPix && valorArrecadado === 0 && "Pagamento total via PIX",
-          ].filter(Boolean);
+          let meiosPagamento = [];
+
+          if (valorArrecadado > 0) {
+            meiosPagamento = ["Ajudar com qualquer valor"];
+          } else {
+            meiosPagamento = [
+              "Ajudar com qualquer valor",
+              temLink && "Comprar na loja",
+              temPix && "Pagamento total via PIX",
+            ].filter(Boolean);
+          }
 
 
           const porcentagem =
@@ -190,6 +195,7 @@ export default function ListaPresentes() {
               : 0;
 
           const faltante = Math.max(precoTotal - valorArrecadado, 0);
+          const indisponivel = p.reservado || valorArrecadado >= precoTotal;
         
           return (
             <Col key={p.id} xs="12" md="6" lg="4" className="mb-3">
@@ -243,21 +249,27 @@ export default function ListaPresentes() {
                   </div>
                   
                   {/*MEIOS DE PAGAMENTO */}
-                  <div className="present-card__payments mb-2">
-                    <p className="mb-0">Para esse presente é possível: </p>
-                    {meiosPagamento.map((m, i) => (
-                      <div key={i} className="present-card__payment-item">
-                        • {m}
-                      </div>
-                    ))}
-                  </div>
+                  {!indisponivel && (
+                    <div className="present-card__payments mb-2">
+                      <p className="mb-0">Para esse presente é possível: </p>
+                      {meiosPagamento.map((m, i) => (
+                        <div key={i} className="present-card__payment-item">
+                          • {m}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   
                   <Badge
                     className={`border ${
-                      p.reservado ? "border-danger" : "border-success"
+                      p.reservado || valorArrecadado >= precoTotal
+                        ? "border-danger"
+                        : "border-success"
                     }`}
                   >
-                    {p.reservado ? "Já escolhido" : "Disponível"}
+                    {p.reservado || valorArrecadado >= precoTotal
+                      ? "Indisponível"
+                      : "Disponível"}
                   </Badge>
                 </CardBody>
               </Card>

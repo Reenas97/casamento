@@ -125,7 +125,7 @@ async function confirmarPix() {
       const precoTotal = Number(dados.preco || 0);
     
       const valorPago =
-        modoPix === "full"
+        modoPix === "full" || modoPix === "externo"
           ? precoTotal
           : Number(valorParcial || 0);
     
@@ -308,7 +308,7 @@ function abrirCompraExterna() {
                   </small>
                 </div>
                 {/* compra externa */}
-                {presente.link && (
+                {presente.link && !pixColetivoIniciado && (
                   <div className="mx-auto">
                     <Button
                       color="secondary"
