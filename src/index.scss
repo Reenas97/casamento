@@ -176,6 +176,15 @@ body {
       }
     }
   }
+
+  .flip-custom {
+  transform: scale(1);
+
+  @media (max-width: 767px) {
+    transform: scale(0.7);
+  }
+}
+
   .header{
     height: 120px;
     background: $middle-purple;
