@@ -121,7 +121,7 @@ export default function ListaPresentes() {
   //const totalPaginas = Math.ceil(presentes.length / itensPorPagina);
 
   return (
-    <Container className="py-5 my-5">
+    <Container className="py-5">
       <h1 className="d-flex align-items-center justify-content-center gap-3">
         Lista de Presentes
         <span
