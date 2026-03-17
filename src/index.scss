@@ -525,6 +525,47 @@ body {
       border: 2px solid $middle-purple;
     }
   }
+
+  .nav-tabs{
+    gap: 20px;
+    cursor: pointer;
+    .nav-link{
+      background: $white;
+      color: $middle-purple;
+      &.active{
+        background: $middle-purple;
+        color: $white;
+      }
+      &:hover{
+        background: $primary-color;
+      }
+    }
+  }
+
+  .tab-pane{
+    h4{
+      color: $white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.60);
+    }
+
+    iframe{
+      border: 2px solid $middle-purple!important;
+    }
+
+    .input-group{
+      flex-direction: column;
+      .form-label{
+        color: $middle-purple;
+        display: block;
+      }
+
+      .form-control{
+        border: 2px solid $middle-purple;
+        background: transparent;
+        display: block;
+      }
+    }
+  }
   
 
 

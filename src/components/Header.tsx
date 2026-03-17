@@ -90,6 +90,14 @@ export default function Header() {
                 Confirmação de Presença
               </NavLink>
             </NavItem>
+            <NavItem>
+              <NavLink
+                style={{ cursor: "pointer" }}
+               onClick={() => handleNavigate("/dicas")}
+              >
+                Dicas
+              </NavLink>
+            </NavItem>
           </Nav>
 
           {/* Botão Admin */}
