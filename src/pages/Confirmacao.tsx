@@ -84,13 +84,7 @@ export default function Confirmacao() {
     }
   }
 
-  function toggleConfirmacao(id: string, confirmado: boolean) {
-    setConvidados((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, confirmou: !confirmado } : c
-      )
-    );
-  }
+
 
   async function salvarConfirmacao() {
     try {
