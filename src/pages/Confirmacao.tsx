@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { Button, Container, Form, FormGroup, Input, Label } from "reactstrap";
 import { db } from "../firebase";
 import { swalError, swalSuccess } from "../helpers/swalAlert";
+import emailjs from "@emailjs/browser";
 
 export default function Confirmacao() {
   const [searchParams] = useSearchParams();
@@ -87,23 +88,66 @@ export default function Confirmacao() {
 
 
   async function salvarConfirmacao() {
+    const principal = convidados.find(c => c.principal);
+
+    if (!principal?.email) {
+      return swalError(
+        "Email obrigatório",
+        "Por favor, informe o email do convidado principal."
+      );
+    }
+
     try {
+      // Monta string com todos os nomes
+      const nomesDoGrupo = convidados.map(c => c.nome).join(", ");
+      const dataConfirmacao = new Date();
+
+      // 1️⃣ Envia email para você apenas **uma vez**
+      await emailjs.send(
+        "service_15m06v9",
+        "template_gvlgpk8",
+        {
+          nomes_do_grupo: nomesDoGrupo,
+          grupo: grupo.nome_grupo,
+          status: convidados.map(c => c.status || "pendente").join(", "),
+          data_confirmacao: dataConfirmacao.toLocaleString("pt-BR")
+        },
+        "vMbgZBpGnITp0wp_m"
+      );
+
+      // 2️⃣ Envia email para o convidado principal, se confirmou
+      if (principal.status === "confirmado") {
+        await emailjs.send(
+          "service_15m06v9",
+          "template_gs1ecx4",
+          {
+            nome: principal.nome,
+            nomes_do_grupo: nomesDoGrupo,
+            data_evento: "30/08/2026",
+            data_confirmacao: dataConfirmacao.toLocaleString("pt-BR"),
+            email_convidado: principal.email
+          },
+          "vMbgZBpGnITp0wp_m"
+        );
+      }
+
+      // Depois que todos os emails foram enviados, salva no banco
       const promises = convidados.map((c) => {
-        // Garante que o status atual do state está sendo usado
         const statusAtual = c.status || "pendente";
-      
+
         return updateDoc(doc(db, "convidados", c.id), {
           status: statusAtual,
-          confirmou: statusAtual === "confirmado", // agora pega do statusAtual
+          confirmou: statusAtual === "confirmado",
           data_confirmacao:
             statusAtual === "confirmado" || statusAtual === "recusado"
               ? new Date()
               : null,
+          email: c.email || null,
         });
       });
-    
+
       await Promise.all(promises);
-    
+
       swalSuccess(
         "Confirmação enviada com sucesso 💜",
         "Estamos ansiosos para celebrar com você!!"
@@ -112,7 +156,7 @@ export default function Confirmacao() {
       console.error(err);
       swalError(
         "Erro ao confirmar presença",
-        "Entre em contato com a noiva para corrigir"
+        "Ocorreu um problema ao enviar o email ou salvar no banco. Tente novamente."
       );
     }
   }
@@ -214,56 +258,82 @@ export default function Confirmacao() {
       )}
   
       {/* 🟢 GRUPO ENCONTRADO */}
-      {grupo && (
-        <>
-          <h1 className="mb-4">Confirmação de Presença</h1>
+{grupo && (
+  <>
+    <h1 className="mb-4">Confirmação de Presença</h1>
 
-          <p className="fs-5">
-            Convite de <strong>{grupo.nome_grupo}</strong>
-          </p>
+    <p className="fs-5">
+      Convite de <strong>{grupo.nome_grupo}</strong>
+    </p>
 
-          <p>Selecione quem irá ao evento:</p>
+    <p>Selecione quem irá ao evento:</p>
 
-          {convidados.map((c) => (
-            <div key={c.id} className="mb-3">
-              <strong>{c.nome}</strong>
-                    
-              <div className="mt-1">
-                <div className="form-check form-check-inline">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name={`status-${c.id}`}
-                    checked={getStatus(c) === "confirmado"}
-                    onChange={() => atualizarStatus(c.id, "confirmado")}
-                  />
-                  <label className="form-check-label">Vou</label>
-                </div>
-                    
-                <div className="form-check form-check-inline">
-                  <input
-                    className="form-check-input"
-                    type="radio"
-                    name={`status-${c.id}`}
-                    checked={getStatus(c) === "recusado"}
-                    onChange={() => atualizarStatus(c.id, "recusado")}
-                  />
-                  <label className="form-check-label">Não vou</label>
-                </div>
-              </div>
-            </div>
-          ))}
+    {convidados.map((c) => (
+      <div key={c.id} className="mb-3">
+        <strong>{c.nome}</strong>
+              
+        <div className="mt-1">
+          <div className="form-check form-check-inline">
+            <input
+              className="form-check-input"
+              type="radio"
+              name={`status-${c.id}`}
+              checked={getStatus(c) === "confirmado"}
+              onChange={() => atualizarStatus(c.id, "confirmado")}
+            />
+            <label className="form-check-label">Vou</label>
+          </div>
+              
+          <div className="form-check form-check-inline">
+            <input
+              className="form-check-input"
+              type="radio"
+              name={`status-${c.id}`}
+              checked={getStatus(c) === "recusado"}
+              onChange={() => atualizarStatus(c.id, "recusado")}
+            />
+            <label className="form-check-label">Não vou</label>
+          </div>
+        </div>
+      </div>
+    ))}
 
-          <Button onClick={salvarConfirmacao} className="mt-3 btn btn--purple text-white">
-            Confirmar presença
-          </Button>
-          {mensagemConfirmacao && (
-            <p className="mt-3 text-center text-success fw-bold">
-              {mensagemConfirmacao}
-            </p>
-          )}
-        </>
-      )}
+    {/* Input de email do convidado principal */}
+    {convidados.some(c => c.principal ) && convidados.some(c => c.principal) && (
+      <FormGroup className="mt-3" style={{ maxWidth: 400, width: "100%" }}>
+        <Label for="emailPrincipal" className="fs-6">
+          Seu email para confirmação (convidado principal):
+        </Label>
+        <Input
+          type="email"
+          id="emailPrincipal"
+          placeholder="exemplo@email.com"
+          value={convidados.find(c => c.principal)?.email || ""}
+          onChange={(e) =>
+            setConvidados(prev =>
+              prev.map(c =>
+                c.principal ? { ...c, email: e.target.value } : c
+              )
+            )
+          }
+        />
+      </FormGroup>
+    )}
+
+    <Button
+      onClick={salvarConfirmacao}
+      className="mt-3 btn btn--purple text-white"
+    >
+      Confirmar presença
+    </Button>
+
+    {mensagemConfirmacao && (
+      <p className="mt-3 text-center text-success fw-bold">
+        {mensagemConfirmacao}
+      </p>
+    )}
+  </>
+)}
     </Container>
   );
 }
