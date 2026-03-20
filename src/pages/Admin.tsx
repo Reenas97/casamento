@@ -79,7 +79,7 @@ export default function Admin() {
   const [modalEditarConvidado, setModalEditarConvidado] = useState(false);
   const [modalAdicionarConvidado, setModalAdicionarConvidado] = useState(false);
   const [paginaAtual, setPaginaAtual] = useState(1);
-  const gruposPorPagina = 10;
+  const gruposPorPagina = 5;
   const indexInicial = (paginaAtual - 1) * gruposPorPagina;
   const indexFinal = indexInicial + gruposPorPagina;
   const [buscaGrupo, setBuscaGrupo] = useState("");
