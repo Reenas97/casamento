@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { db } from "../firebase";
-import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, doc, where, getDocs } from "firebase/firestore";
 import { useAuthAdmin } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
@@ -238,12 +238,13 @@ export default function Admin() {
     }
 
     try {
-      // cria grupo
+      // cria grupo]
+      const tokenFinal =
+        novoGrupo.token || (await gerarTokenUnico());
       const docRef = await addDoc(collection(db, "grupos"), {
         nome_grupo: novoGrupo.nome_grupo,
-        token: novoGrupo.token || Math.random().toString(36).substring(2, 8),
+        token: tokenFinal,
       });
-
       // cria convidados vinculados
       const promises = novosConvidados
         .filter((c) => c.nome.trim() !== "")
@@ -324,6 +325,40 @@ export default function Admin() {
       console.error(err);
       await swalError("Erro ao excluir grupo");
     }
+  }
+
+  
+
+  async function gerarTokenUnico(): Promise<string> {
+    const caracteres = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+  function gerarToken() {
+      let token = "";
+      for (let i = 0; i < 8; i++) {
+        token += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+      }
+      return token;
+    }
+  
+    let token = gerarToken();
+    let existe = true;
+  
+    while (existe) {
+      const q = query(
+        collection(db, "grupos"),
+        where("token", "==", token)
+      );
+    
+      const snapshot = await getDocs(q);
+    
+      if (snapshot.empty) {
+        existe = false;
+      } else {
+        token = gerarToken(); // tenta outro
+      }
+    }
+  
+    return token;
   }
 
   const columns = [
@@ -838,13 +873,21 @@ export default function Admin() {
           </Col>
             
           <Col md={6}>
-            <Input
-              placeholder="Token (opcional)"
-              value={novoGrupo.token}
-              onChange={(e) =>
-                setNovoGrupo({ ...novoGrupo, token: e.target.value })
+           <Input
+            placeholder="Token (automático)"
+            value={novoGrupo.token}
+            onFocus={async () => {
+              if (!novoGrupo.token) {
+                const token = await gerarTokenUnico();
+              
+                setNovoGrupo((prev) => ({
+                  ...prev,
+                  token,
+                }));
               }
-            />
+            }}
+            readOnly
+          />
           </Col>
         </Row>
 
