@@ -48,6 +48,7 @@ type Convidado = {
   principal: boolean;
   confirmou: boolean;
   status?: "confirmado" | "recusado" | "pendente";
+  crianca?: boolean;
 };
 
 
@@ -113,11 +114,15 @@ export default function Admin() {
   });
 
   const [novosConvidados, setNovosConvidados] = useState<
-    { nome: string; principal: boolean }[]
-  >([{ nome: "", principal: false }]);
+    { nome: string; principal: boolean; crianca: boolean }[]
+  >([{ nome: "", principal: false, crianca: false }]);
   const confirmados = convidados.filter(c => getStatus(c) === "confirmado").length;
   const recusados = convidados.filter(c => getStatus(c) === "recusado").length;
   const pendentes = convidados.filter(c => getStatus(c) === "pendente").length;
+  const [totalCriancas, setTotalCriancas] = useState(0);
+  useEffect(() => {
+    setTotalCriancas(convidados.filter(c => c.crianca).length);
+  }, [convidados]);
 
   function editarGrupo(grupo: Grupo) {
     setGrupoEditando(grupo);
@@ -208,6 +213,7 @@ export default function Admin() {
       principal: convidadoEditando.principal,
       confirmou: convidadoEditando.confirmou,
       status: convidadoEditando.status || getStatus(convidadoEditando),
+      crianca: convidadoEditando.crianca || false
     });
 
     await swalSuccess("Convidado atualizado!");
@@ -219,7 +225,7 @@ export default function Admin() {
   function adicionarCampoConvidado() {
     setNovosConvidados([
       ...novosConvidados,
-      { nome: "", principal: false },
+      { nome: "", principal: false, crianca: false },
     ]);
   }
 
@@ -267,7 +273,7 @@ export default function Admin() {
 
       // reset
       setNovoGrupo({ nome_grupo: "", token: "" });
-      setNovosConvidados([{ nome: "", principal: false }]);
+      setNovosConvidados([{ nome: "", principal: false, crianca: false }]);
     } catch (err) {
       console.error(err);
       await swalError("Erro ao criar grupo");
@@ -754,7 +760,8 @@ export default function Admin() {
       <p>
         <b>Confirmados:</b> {confirmados} <br />
         <b>Não vão:</b> {recusados} <br />
-        <b>Pendentes:</b> {pendentes}
+        <b>Pendentes:</b> {pendentes} <br / >
+        <b>Total de crianças:</b> {totalCriancas} <br />
       </p>
 
     <Input
@@ -786,7 +793,7 @@ export default function Admin() {
                   size="sm"
                   className="btn--purple"
                   onClick={() => {
-                    setNovosConvidados([{ nome: "", principal: false }]);
+                    setNovosConvidados([{ nome: "", principal: false, crianca: false }]);
                     setGrupoEditando(grupo);
                     setModalAdicionarConvidado(true);
                   }}
@@ -816,7 +823,7 @@ export default function Admin() {
                 className="d-flex justify-content-between align-items-center border-bottom py-2"
               >
                 <div>
-                  {c.nome} {c.principal && "⭐"}
+                  {c.nome} {c.principal && "⭐"} {c.crianca && "(criança)"}
                   <br />
                   <small
                     style={{
@@ -919,7 +926,7 @@ export default function Admin() {
 
         {novosConvidados.map((c, index) => (
             <Row key={index} className="mb-2">
-              <Col md={6}>
+              <Col md={4}>
                 <Input
                   placeholder="Nome"
                   value={c.nome}
@@ -929,7 +936,7 @@ export default function Admin() {
                 />
               </Col>
                 
-              <Col md={3}>
+              <Col md={2}>
                 <Input
                   type="checkbox"
                   checked={c.principal}
@@ -938,6 +945,17 @@ export default function Admin() {
                   }
                 />{" "}
                 Principal
+              </Col>
+
+              <Col md={2}>
+                <Input
+                  type="checkbox"
+                  checked={c.crianca}
+                  onChange={(e) =>
+                    atualizarConvidado(index, "crianca", e.target.checked)
+                  }
+                />{" "}
+                Criança
               </Col>
                 
               <Col md={3}>
@@ -1210,6 +1228,23 @@ export default function Admin() {
                   É o principal do grupo
                 </div>
               </FormGroup>
+
+              <FormGroup className="mt-3">
+                <Label>Criança</Label>
+                <div>
+                  <Input
+                    type="checkbox"
+                    checked={convidadoEditando?.crianca || false}
+                    onChange={(e) =>
+                      setConvidadoEditando({
+                        ...convidadoEditando!,
+                        crianca: e.target.checked,
+                      })
+                    }
+                  />{" "}
+                  É uma criança
+                </div>
+              </FormGroup>
                   
               <FormGroup className="mt-3">
                 <Label>Status</Label>
@@ -1286,7 +1321,7 @@ export default function Admin() {
         <ModalBody>
           {novosConvidados.map((c, index) => (
             <Row key={index} className="mb-2">
-              <Col md={6}>
+              <Col md={4}>
                 <Input
                   placeholder="Nome"
                   value={c.nome}
@@ -1296,7 +1331,7 @@ export default function Admin() {
                 />
               </Col>
                 
-              <Col md={3}>
+              <Col md={2}>
                 <Input
                   type="checkbox"
                   checked={c.principal}
@@ -1305,6 +1340,17 @@ export default function Admin() {
                   }
                 />{" "}
                 Principal
+              </Col>
+
+              <Col md={2}>
+                <Input
+                  type="checkbox"
+                  checked={c.crianca}
+                  onChange={(e) =>
+                    atualizarConvidado(index, "crianca", e.target.checked)
+                  }
+                />{" "}
+                Criança
               </Col>
                 
               <Col md={3}>
