@@ -16,6 +16,7 @@ import 'swiper/css/pagination';
 import "swiper/css/navigation";
 import ListaPresentes from "./pages/ListaPresentes";
 import Dicas from "./pages/Dicas";
+import ImportConvidados from "./helpers/ImportConvidados";
 
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -30,6 +31,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/lista" element={<ListaPresentes />} />
         <Route path = "/dicas" element = {<Dicas />} />
         <Route path="/import-presentes" element={<ImportPresentes />} />
+        <Route path="/import-convidados" element={<ImportConvidados />} />
       </Route>
     </Routes>
   </BrowserRouter>

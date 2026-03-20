@@ -35,6 +35,20 @@ type Presente = {
   valorArrecadado?: number;
 };
 
+type Grupo = {
+  id: string;
+  nome_grupo: string;
+  token: string;
+};
+
+type Convidado = {
+  id: string;
+  nome: string;
+  grupo_id: string;
+  principal: boolean;
+  confirmou: boolean;
+};
+
 
 export default function Admin() {
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
@@ -57,6 +71,260 @@ export default function Admin() {
   const [presenteEditando, setPresenteEditando] = useState<Presente | null>(null);
 
   const toggleModalEditar = () => setModalEditar(!modalEditar);
+
+  const [grupos, setGrupos] = useState<Grupo[]>([]);
+  const [convidados, setConvidados] = useState<Convidado[]>([]);
+  const [convidadoEditando, setConvidadoEditando] = useState<Convidado | null>(null);
+  const [modalEditarConvidado, setModalEditarConvidado] = useState(false);
+  const [modalAdicionarConvidado, setModalAdicionarConvidado] = useState(false);
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const gruposPorPagina = 10;
+  const indexInicial = (paginaAtual - 1) * gruposPorPagina;
+  const indexFinal = indexInicial + gruposPorPagina;
+  const [buscaGrupo, setBuscaGrupo] = useState("");
+  const gruposFiltrados = grupos.filter((g) => {
+    const busca = buscaGrupo.toLowerCase();
+
+    // match no nome do grupo
+    const matchGrupo = g.nome_grupo.toLowerCase().includes(busca);
+
+    // convidados do grupo
+    const convidadosDoGrupo = convidados.filter(
+      (c) => c.grupo_id === g.id
+    );
+
+    // match em algum convidado
+    const matchConvidado = convidadosDoGrupo.some((c) =>
+      c.nome.toLowerCase().includes(busca)
+    );
+
+    return matchGrupo || matchConvidado;
+  });
+  
+  const gruposPaginados = gruposFiltrados.slice(indexInicial, indexFinal);
+  const totalPaginas = Math.ceil(gruposFiltrados.length / gruposPorPagina);
+  const totalConvidados = convidados.length;
+  const confirmados = convidados.filter(c => c.confirmou).length;
+  const [grupoEditando, setGrupoEditando] = useState<Grupo | null>(null);
+  const [modalGrupo, setModalGrupo] = useState(false);
+  const [novoGrupo, setNovoGrupo] = useState({
+    nome_grupo: "",
+    token: "",
+  });
+
+  const [novosConvidados, setNovosConvidados] = useState<
+    { nome: string; principal: boolean }[]
+  >([{ nome: "", principal: false }]);
+
+  function editarGrupo(grupo: Grupo) {
+    setGrupoEditando(grupo);
+    setModalGrupo(true);
+  }
+
+  async function salvarGrupo() {
+    if (!grupoEditando) return;
+
+    try {
+      await updateDoc(doc(db, "grupos", grupoEditando.id), {
+        nome_grupo: grupoEditando.nome_grupo,
+      });
+
+      await swalSuccess("Grupo atualizado!");
+      setModalGrupo(false);
+      setGrupoEditando(null);
+    } catch (err) {
+      console.error(err);
+      await swalError("Erro ao atualizar grupo");
+    }
+  }
+
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [buscaGrupo]);
+
+  useEffect(() => {
+    const unsubscribeGrupos = onSnapshot(collection(db, "grupos"), (snapshot) => {
+      const lista = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Grupo, "id">),
+      }));
+
+      setGrupos(
+        lista.sort((a, b) =>
+          a.nome_grupo.localeCompare(b.nome_grupo, "pt-BR", {
+            sensitivity: "base",
+          })
+        )
+      );
+    });
+
+    const unsubscribeConvidados = onSnapshot(collection(db, "convidados"), (snapshot) => {
+      const lista = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Convidado, "id">),
+      }));
+
+      setConvidados(lista);
+    });
+
+    return () => {
+      unsubscribeGrupos();
+      unsubscribeConvidados();
+    };
+  }, []);
+
+  function getConvidadosPorGrupo(grupoId: string) {
+    return convidados.filter((c) => c.grupo_id === grupoId);
+  }
+
+  async function excluirConvidado(id: string) {
+    const result = await Swal.fire({
+      title: "Tem certeza?",
+      text: "Deseja excluir este convidado?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sim",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!result.isConfirmed) return;
+
+    await deleteDoc(doc(db, "convidados", id));
+  }
+
+  function editarConvidado(c: Convidado) {
+    setConvidadoEditando(c);
+    setModalEditarConvidado(true);
+  }
+
+  async function salvarConvidado() {
+    if (!convidadoEditando) return;
+
+    await updateDoc(doc(db, "convidados", convidadoEditando.id), {
+      nome: convidadoEditando.nome,
+      principal: convidadoEditando.principal,
+      confirmou: convidadoEditando.confirmou,
+    });
+
+    await swalSuccess("Convidado atualizado!");
+
+    setModalEditarConvidado(false);
+    setConvidadoEditando(null);
+  }
+
+  function adicionarCampoConvidado() {
+    setNovosConvidados([
+      ...novosConvidados,
+      { nome: "", principal: false },
+    ]);
+  }
+
+  function removerCampoConvidado(index: number) {
+    const lista = [...novosConvidados];
+    lista.splice(index, 1);
+    setNovosConvidados(lista);
+  }
+
+  function atualizarConvidado(index: number, campo: string, valor: any) {
+    const lista = [...novosConvidados];
+    lista[index] = { ...lista[index], [campo]: valor };
+    setNovosConvidados(lista);
+  }
+
+  async function criarGrupoComConvidados() {
+    if (!novoGrupo.nome_grupo.trim()) {
+      await swalError("Nome do grupo é obrigatório");
+      return;
+    }
+
+    try {
+      // cria grupo
+      const docRef = await addDoc(collection(db, "grupos"), {
+        nome_grupo: novoGrupo.nome_grupo,
+        token: novoGrupo.token || Math.random().toString(36).substring(2, 8),
+      });
+
+      // cria convidados vinculados
+      const promises = novosConvidados
+        .filter((c) => c.nome.trim() !== "")
+        .map((c) =>
+          addDoc(collection(db, "convidados"), {
+            nome: c.nome,
+            principal: c.principal,
+            confirmou: false,
+            grupo_id: docRef.id,
+          })
+        );
+
+      await Promise.all(promises);
+
+      await swalSuccess("Grupo criado com sucesso!");
+
+      // reset
+      setNovoGrupo({ nome_grupo: "", token: "" });
+      setNovosConvidados([{ nome: "", principal: false }]);
+    } catch (err) {
+      console.error(err);
+      await swalError("Erro ao criar grupo");
+    }
+  }
+
+  async function adicionarConvidadosExistente(grupoId: string) {
+    const promises = novosConvidados
+      .filter((c) => c.nome.trim() !== "")
+      .map((c) =>
+        addDoc(collection(db, "convidados"), {
+          nome: c.nome,
+          principal: c.principal,
+          confirmou: false,
+          grupo_id: grupoId,
+        })
+      );
+
+    await Promise.all(promises);
+
+    await swalSuccess("Convidados adicionados!");
+  }
+
+  function toggleModalEditarConvidado() {
+    setModalEditarConvidado(!modalEditarConvidado);
+  }
+
+  function toggleModalAdicionarConvidado() {
+    setModalAdicionarConvidado(!modalAdicionarConvidado);
+  }
+
+  async function excluirGrupo(grupoId: string) {
+    const result = await Swal.fire({
+      title: "Tem certeza?",
+      text: "Isso irá excluir o grupo e TODOS os convidados!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sim, excluir",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const convidadosDoGrupo = convidados.filter(
+        (c) => c.grupo_id === grupoId
+      );
+
+      const deletarConvidados = convidadosDoGrupo.map((c) =>
+        deleteDoc(doc(db, "convidados", c.id))
+      );
+
+      await Promise.all(deletarConvidados);
+
+      await deleteDoc(doc(db, "grupos", grupoId));
+
+      await swalSuccess("Grupo e convidados excluídos!");
+    } catch (err) {
+      console.error(err);
+      await swalError("Erro ao excluir grupo");
+    }
+  }
 
   const columns = [
     {
@@ -435,6 +703,202 @@ export default function Admin() {
         </CardBody>
       </Card>
 
+      <h2 className="mt-5">Lista de Convidados</h2>
+      <p>
+        <b>Confirmados:</b> {confirmados} / {totalConvidados}
+      </p>
+
+    <Input
+      type="text"
+      placeholder="Buscar grupo..."
+      value={buscaGrupo}
+      onChange={(e) => setBuscaGrupo(e.target.value)}
+      className="w-100 mb-3"
+    />  
+
+    {gruposFiltrados.length === 0 && (
+      <p className="text-center mt-3">Nenhum grupo encontrado</p>
+    )}
+
+    {gruposPaginados.map((grupo) => {
+      const lista = getConvidadosPorGrupo(grupo.id);
+
+      return (
+        <Card key={grupo.id} className="mb-3 shadow-sm">
+          <CardBody>
+            <div className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">
+                {grupo.nome_grupo}
+                <small className="ms-2 text-muted">({grupo.token})</small>
+              </h5>
+
+              <div className="d-flex gap-2">
+                <Button
+                  size="sm"
+                  className="btn--purple"
+                  onClick={() => {
+                    setNovosConvidados([{ nome: "", principal: false }]);
+                    setGrupoEditando(grupo);
+                    setModalAdicionarConvidado(true);
+                  }}
+                >
+                  + Convidado
+                </Button>
+                
+                <button
+                  className="btn btn-sm btn-primary"
+                  onClick={() => editarGrupo(grupo)}
+                >
+                  <FaEdit />
+                </button>
+                
+                <button
+                  className="btn btn-sm btn-danger"
+                  onClick={() => excluirGrupo(grupo.id)}
+                >
+                  <FaTrash />
+                </button>
+              </div>
+            </div>
+      
+            {lista.map((c) => (
+              <div
+                key={c.id}
+                className="d-flex justify-content-between align-items-center border-bottom py-2"
+              >
+                <div>
+                  {c.nome} {c.principal && "⭐"}
+                  <br />
+                  <small
+                    style={{
+                      color: c.confirmou ? "green" : "red",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {c.confirmou ? "Confirmado" : "Pendente"}
+                  </small>
+                </div>
+            
+                <div>
+                  <button
+                    className="btn btn-sm btn-primary me-2"
+                    onClick={() => editarConvidado(c)}
+                  >
+                    <FaEdit />
+                  </button>
+            
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => excluirConvidado(c.id)}
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+      );
+      })}
+      <div className="d-flex justify-content-center align-items-center mt-4 gap-2">
+        <Button
+          className="btn btn--purple"
+          disabled={paginaAtual === 1}
+          onClick={() => setPaginaAtual((p) => p - 1)}
+        >
+          ←
+        </Button>
+
+        <span>
+          Página {paginaAtual} de {totalPaginas}
+        </span>
+
+        <Button
+          className="btn btn--purple"
+          disabled={paginaAtual === totalPaginas}
+          onClick={() => setPaginaAtual((p) => p + 1)}
+        >
+          →
+        </Button>
+      </div>
+
+      <Card className="mt-4 shadow-sm">
+        <CardBody>
+        <h2 className="mb-3">Adicionar Grupo</h2>
+
+        <Row className="g-3">
+          <Col md={6}>
+            <Input
+              placeholder="Nome do grupo"
+              value={novoGrupo.nome_grupo}
+              onChange={(e) =>
+                setNovoGrupo({ ...novoGrupo, nome_grupo: e.target.value })
+              }
+            />
+          </Col>
+            
+          <Col md={6}>
+            <Input
+              placeholder="Token (opcional)"
+              value={novoGrupo.token}
+              onChange={(e) =>
+                setNovoGrupo({ ...novoGrupo, token: e.target.value })
+              }
+            />
+          </Col>
+        </Row>
+
+        <hr />
+
+        <h5>Convidados</h5>
+
+        {novosConvidados.map((c, index) => (
+            <Row key={index} className="mb-2">
+              <Col md={6}>
+                <Input
+                  placeholder="Nome"
+                  value={c.nome}
+                  onChange={(e) =>
+                    atualizarConvidado(index, "nome", e.target.value)
+                  }
+                />
+              </Col>
+                
+              <Col md={3}>
+                <Input
+                  type="checkbox"
+                  checked={c.principal}
+                  onChange={(e) =>
+                    atualizarConvidado(index, "principal", e.target.checked)
+                  }
+                />{" "}
+                Principal
+              </Col>
+                
+              <Col md={3}>
+                <Button
+                  color="danger"
+                  size="sm"
+                  onClick={() => removerCampoConvidado(index)}
+                >
+                  Remover
+                </Button>
+              </Col>
+            </Row>
+          ))}
+
+          <Button className="btn btn--purple" onClick={adicionarCampoConvidado}>
+            + convidado
+          </Button>
+        
+          <div className="text-end mt-3">
+            <Button className="btn--purple" onClick={criarGrupoComConvidados}>
+              Criar Grupo
+            </Button>
+          </div>
+        </CardBody>
+      </Card>
+
       {/* modal editar */}
       <Modal isOpen={modalEditar} toggle={toggleModalEditar} centered size="lg">
         <ModalHeader toggle={toggleModalEditar}>
@@ -605,6 +1069,170 @@ export default function Admin() {
           </Button>
           <Button color="secondary" onClick={toggleModalEditar}>
             Cancelar
+          </Button>
+        </ModalFooter>
+      </Modal>
+      
+      {/* modal editar grupo */}
+      <Modal isOpen={modalGrupo} toggle={() => setModalGrupo(!modalGrupo)} centered>
+        <ModalHeader toggle={() => setModalGrupo(!modalGrupo)}>
+          Editar Grupo
+        </ModalHeader>
+
+        <ModalBody>
+          {grupoEditando && (
+            <FormGroup>
+              <Label>Nome do grupo</Label>
+              <Input
+                value={grupoEditando.nome_grupo}
+                onChange={(e) =>
+                  setGrupoEditando({
+                    ...grupoEditando,
+                    nome_grupo: e.target.value,
+                  })
+                }
+              />
+            </FormGroup>
+          )}
+        </ModalBody>
+        
+        <ModalFooter>
+          <Button className="btn--purple" onClick={salvarGrupo}>
+            Salvar
+          </Button>
+        
+          <Button color="secondary" onClick={() => setModalGrupo(false)}>
+            Cancelar
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* modal editar convidado */}
+      <Modal isOpen={modalEditarConvidado} toggle={toggleModalEditarConvidado} centered>
+        <ModalHeader toggle={toggleModalEditarConvidado}>
+          Editar Convidado
+        </ModalHeader>
+
+        <ModalBody>
+          {convidadoEditando && (
+            <>
+              <FormGroup>
+                <Label>Nome</Label>
+                <Input
+                  value={convidadoEditando.nome}
+                  onChange={(e) =>
+                    setConvidadoEditando({
+                      ...convidadoEditando,
+                      nome: e.target.value,
+                    })
+                  }
+                />
+              </FormGroup>
+                
+              <FormGroup className="mt-3">
+                <Label>Principal</Label>
+                <div>
+                  <Input
+                    type="checkbox"
+                    checked={convidadoEditando.principal}
+                    onChange={(e) =>
+                      setConvidadoEditando({
+                        ...convidadoEditando,
+                        principal: e.target.checked,
+                      })
+                    }
+                  />{" "}
+                  É o principal do grupo
+                </div>
+              </FormGroup>
+                  
+              <FormGroup className="mt-3">
+                <Label>Confirmou presença</Label>
+                <div>
+                  <Input
+                    type="checkbox"
+                    checked={convidadoEditando.confirmou}
+                    onChange={(e) =>
+                      setConvidadoEditando({
+                        ...convidadoEditando,
+                        confirmou: e.target.checked,
+                      })
+                    }
+                  />{" "}
+                  Confirmado
+                </div>
+              </FormGroup>
+            </>
+          )}
+        </ModalBody>
+        
+        <ModalFooter>
+          <Button className="btn--purple" onClick={salvarConvidado}>
+            Salvar
+          </Button>
+        
+          <Button color="secondary" onClick={toggleModalEditarConvidado}>
+            Cancelar
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      <Modal isOpen={modalAdicionarConvidado} toggle={toggleModalAdicionarConvidado}>
+        <ModalHeader toggle={toggleModalAdicionarConvidado}>
+          Adicionar Convidados
+        </ModalHeader>
+              
+        <ModalBody>
+          {novosConvidados.map((c, index) => (
+            <Row key={index} className="mb-2">
+              <Col md={6}>
+                <Input
+                  placeholder="Nome"
+                  value={c.nome}
+                  onChange={(e) =>
+                    atualizarConvidado(index, "nome", e.target.value)
+                  }
+                />
+              </Col>
+                
+              <Col md={3}>
+                <Input
+                  type="checkbox"
+                  checked={c.principal}
+                  onChange={(e) =>
+                    atualizarConvidado(index, "principal", e.target.checked)
+                  }
+                />{" "}
+                Principal
+              </Col>
+                
+              <Col md={3}>
+                <Button
+                  color="danger"
+                  size="sm"
+                  onClick={() => removerCampoConvidado(index)}
+                >
+                  Remover
+                </Button>
+              </Col>
+            </Row>
+          ))}
+      
+          <Button size="sm" onClick={adicionarCampoConvidado}>
+            + Adicionar campo
+          </Button>
+        </ModalBody>
+        
+        <ModalFooter>
+          <Button
+            color="primary"
+            onClick={() => {
+              if (!grupoEditando) return;
+              adicionarConvidadosExistente(grupoEditando.id);
+              setModalAdicionarConvidado(false);
+            }}
+          >
+            Salvar
           </Button>
         </ModalFooter>
       </Modal>
