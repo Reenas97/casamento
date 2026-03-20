@@ -566,7 +566,24 @@ body {
       }
     }
   }
-  
 
+  .confirmacao {
+    .form-check-input {
+      border: 1px solid $middle-purple;
+
+      &:checked {
+        background-color: $middle-purple;
+      }
+    }
+    form{
+      label{
+        color: $middle-purple;
+      }
+      input{
+        border: 2px solid $middle-purple;
+        background: transparent;
+      }
+    }
+  }
 
 }

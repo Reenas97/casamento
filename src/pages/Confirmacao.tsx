@@ -1,16 +1,230 @@
+import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import { FaSmileBeam } from "react-icons/fa";
-import { Container } from "reactstrap";
+import { useSearchParams } from "react-router-dom";
+import { Button, Container, Form, FormGroup, Input, Label } from "reactstrap";
+import { db } from "../firebase";
+import { swalError, swalSuccess } from "../helpers/swalAlert";
 
 export default function Confirmacao() {
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
+  const [grupo, setGrupo] = useState<any>(null);
+  const [modoManual, setModoManual] = useState(false);
+  const [tokenInput, setTokenInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
+  const [convidados, setConvidados] = useState<any[]>([]);
+  const [mensagemConfirmacao, setMensagemConfirmacao] = useState("");
+  
+  async function buscarGrupoPorToken(tokenBusca: string) {
+    setLoading(true);
+    setErro("");
+
+    try {
+      const q = query(
+        collection(db, "grupos"),
+        where("token", "==", tokenBusca)
+      );
+
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        setGrupo(null);
+
+        swalError(
+          "Código inválido",
+          "Confira o código do convite e tente novamente. Se não der certo com o código enviado, entre em contato com a noiva."
+        );
+      } else {
+        const doc = snapshot.docs[0];
+
+        const grupoData = {
+          id: doc.id,
+          ...doc.data(),
+        };
+        
+        setGrupo(grupoData);
+        setModoManual(false);
+        
+        await buscarConvidados(grupoData.id); // ✅ agora existe
+      }
+    } catch (e) {
+      console.error(e);
+      setErro("Erro ao buscar convite");
+    }
+
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    if (!token) {
+      setModoManual(true);
+    } else {
+      buscarGrupoPorToken(token);
+    }
+  }, [token]);
+
+  async function buscarConvidados(grupoId: string) {
+    try {
+      const q = query(
+        collection(db, "convidados"),
+        where("grupo_id", "==", grupoId)
+      );
+
+      const snapshot = await getDocs(q);
+
+      const lista = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      setConvidados(lista);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function toggleConfirmacao(id: string, confirmado: boolean) {
+    setConvidados((prev) =>
+      prev.map((c) =>
+        c.id === id ? { ...c, confirmou: !confirmado } : c
+      )
+    );
+  }
+
+  async function salvarConfirmacao() {
+    try {
+      const promises = convidados.map((c) =>
+        updateDoc(doc(db, "convidados", c.id), {
+          confirmou: c.confirmou,
+          data_confirmacao: new Date(),
+        })
+      );
+
+      await Promise.all(promises);
+
+      await swalSuccess(
+        "Presença confirmada 💜",
+        "Estamos ansiosos para celebrar com você!"
+      );
+    } catch (e) {
+      console.error(e);
+      swalError(
+        "Erro ao confirmar 😢",
+        "Entra em contato com a noiva pra ela arrumar!!"
+      );
+    }
+  }
+
+  function formatarNomes(lista: any[]) {
+    const nomes = lista.map((c) => c.nome);
+
+    if (nomes.length === 1) return nomes[0];
+    if (nomes.length === 2) return nomes.join(" e ");
+
+    return `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
+  }
+
+  useEffect(() => {
+    if (!convidados.length) {
+      setMensagemConfirmacao("");
+      return;
+    }
+  
+    const confirmados = convidados.filter((c) => c.confirmou);
+  
+    if (confirmados.length === 0) {
+      setMensagemConfirmacao("");
+      return;
+    }
+  
+    const nomesFormatados = formatarNomes(confirmados);
+  
+    const confirmadoPalavra =
+      confirmados.length === 1 ? "confirmado" : "confirmados";
+  
+    setMensagemConfirmacao(
+      `${nomesFormatados} ${confirmadoPalavra}! Estamos ansiosos para comemorar com vocês! 💜`
+    );
+  }, [convidados]);
 
   return (
-    <Container className="d-flex justify-content-center align-items-center h-100 my-auto">
-      <h1>
-        Em construção 
-        <FaSmileBeam
-          style={{marginLeft: 15 , color: '#CD67FF'}}
-        />
-      </h1>
+    <Container className="d-flex flex-column justify-content-center align-items-center h-100 my-auto confirmacao">
+    
+      {/* 🔄 LOADING */}
+      {loading && <p>Carregando...</p>}
+    
+      {/*  ERRO */}
+      {erro && <p style={{ color: "red" }}>{erro}</p>}
+    
+      {/* 🟣 MODO MANUAL (SEM TOKEN) */}
+      {modoManual && !grupo && (
+        <>
+          <h1>Confirmação de presença</h1>
+            
+          <Form
+            onSubmit={(e) => {
+              e.preventDefault();
+              buscarGrupoPorToken(tokenInput);
+            }}
+            style={{ maxWidth: 400, width: "100%" }}
+          >
+            <FormGroup>
+              <Label for="token" className="fs-5 mt-3">Digite o código do seu convite:</Label>
+          
+              <Input
+                id="token"
+                value={tokenInput}
+                onChange={(e) => setTokenInput(e.target.value)}
+                placeholder="Ex: abc123"
+              />
+            </FormGroup>
+          
+            <Button
+              type="submit"
+              className="btn--purple w-100"
+            >
+              Buscar convite
+            </Button>
+          </Form>
+        </>
+      )}
+  
+      {/* 🟢 GRUPO ENCONTRADO */}
+      {grupo && (
+        <>
+          <h1 className="mb-4">Confirmação de Presença</h1>
+
+          <p className="fs-5">
+            Convite de <strong>{grupo.nome_grupo}</strong>
+          </p>
+
+          <p>Selecione quem irá ao evento:</p>
+
+          {convidados.map((c) => (
+            <FormGroup check key={c.id} className="mb-2">
+              <Input
+                type="checkbox"
+                checked={!!c.confirmou}
+                onChange={() => toggleConfirmacao(c.id, c.confirmou)}
+              />
+              <Label check>
+                {c.nome}
+              </Label>
+            </FormGroup>
+          ))}
+
+          <Button onClick={salvarConfirmacao} className="mt-3 btn btn--purple text-white">
+            Confirmar presença
+          </Button>
+          {mensagemConfirmacao && (
+            <p className="mt-3 text-center text-success fw-bold">
+              {mensagemConfirmacao}
+            </p>
+          )}
+        </>
+      )}
     </Container>
   );
 }
