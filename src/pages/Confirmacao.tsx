@@ -298,11 +298,13 @@ export default function Confirmacao() {
       </div>
     ))}
 
+    <small><b>Caso você queira levar alguém que não está na lista, entrar em contato com os noivos.</b></small>
+
     {/* Input de email do convidado principal */}
     {convidados.some(c => c.principal ) && convidados.some(c => c.principal) && (
       <FormGroup className="mt-3" style={{ maxWidth: 400, width: "100%" }}>
-        <Label for="emailPrincipal" className="fs-6">
-          Seu email para confirmação (convidado principal):
+        <Label for="emailPrincipal" className="fs-6 text-center d-block">
+          Seu email para confirmação:
         </Label>
         <Input
           type="email"
