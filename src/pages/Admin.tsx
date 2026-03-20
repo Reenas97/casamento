@@ -812,7 +812,7 @@ export default function Admin() {
           Exportar Excel
         </Button>
       </div>
-      <Card className="bg--blue text-white mb-4">
+      <Card className="bg--blue text-white mb-4 card-infos">
         <CardBody>
           <b>Confirmados:</b> {confirmados} <br />
           <b>Não vão:</b> {recusados} <br />

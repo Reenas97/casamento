@@ -595,12 +595,10 @@ body {
     }
   }
 
-  .admin{
-    .card{
-      width: 25%;
-      @media (max-width: 767px) {
-        width: 100%;
-      }
+  .card-infos{  
+    width: 25%;
+    @media (max-width: 767px) {
+      width: 100%;
     }
   }
 
