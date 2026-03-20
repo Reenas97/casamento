@@ -1,6 +1,5 @@
 import { collection, doc, getDocs, query, updateDoc, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { FaSmileBeam } from "react-icons/fa";
 import { useSearchParams } from "react-router-dom";
 import { Button, Container, Form, FormGroup, Input, Label } from "reactstrap";
 import { db } from "../firebase";
@@ -95,24 +94,31 @@ export default function Confirmacao() {
 
   async function salvarConfirmacao() {
     try {
-      const promises = convidados.map((c) =>
-        updateDoc(doc(db, "convidados", c.id), {
-          confirmou: c.confirmou,
-          data_confirmacao: new Date(),
-        })
-      );
-
+      const promises = convidados.map((c) => {
+        // Garante que o status atual do state está sendo usado
+        const statusAtual = c.status || "pendente";
+      
+        return updateDoc(doc(db, "convidados", c.id), {
+          status: statusAtual,
+          confirmou: statusAtual === "confirmado", // agora pega do statusAtual
+          data_confirmacao:
+            statusAtual === "confirmado" || statusAtual === "recusado"
+              ? new Date()
+              : null,
+        });
+      });
+    
       await Promise.all(promises);
-
-      await swalSuccess(
-        "Presença confirmada 💜",
-        "Estamos ansiosos para celebrar com você!"
+    
+      swalSuccess(
+        "Confirmação enviada com sucesso 💜",
+        "Estamos ansiosos para celebrar com você!!"
       );
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
       swalError(
-        "Erro ao confirmar 😢",
-        "Entra em contato com a noiva pra ela arrumar!!"
+        "Erro ao confirmar presença",
+        "Entre em contato com a noiva para corrigir"
       );
     }
   }
@@ -148,6 +154,28 @@ export default function Confirmacao() {
       `${nomesFormatados} ${confirmadoPalavra}! Estamos ansiosos para comemorar com vocês! 💜`
     );
   }, [convidados]);
+
+  function atualizarStatus(id: string, status: "confirmado" | "recusado") {
+    setConvidados((prev) =>
+      prev.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              status,
+              confirmou: status === "confirmado", // compatibilidade
+            }
+          : c
+      )
+    );
+  }
+
+  function getStatus(convidado: any) {
+    if (convidado.status) return convidado.status;
+
+    if (convidado.confirmou === true) return "confirmado";
+
+    return "pendente";
+  }
 
   return (
     <Container className="d-flex flex-column justify-content-center align-items-center h-100 my-auto confirmacao">
@@ -203,16 +231,33 @@ export default function Confirmacao() {
           <p>Selecione quem irá ao evento:</p>
 
           {convidados.map((c) => (
-            <FormGroup check key={c.id} className="mb-2">
-              <Input
-                type="checkbox"
-                checked={!!c.confirmou}
-                onChange={() => toggleConfirmacao(c.id, c.confirmou)}
-              />
-              <Label check>
-                {c.nome}
-              </Label>
-            </FormGroup>
+            <div key={c.id} className="mb-3">
+              <strong>{c.nome}</strong>
+                    
+              <div className="mt-1">
+                <div className="form-check form-check-inline">
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    name={`status-${c.id}`}
+                    checked={getStatus(c) === "confirmado"}
+                    onChange={() => atualizarStatus(c.id, "confirmado")}
+                  />
+                  <label className="form-check-label">Vou</label>
+                </div>
+                    
+                <div className="form-check form-check-inline">
+                  <input
+                    className="form-check-input"
+                    type="radio"
+                    name={`status-${c.id}`}
+                    checked={getStatus(c) === "recusado"}
+                    onChange={() => atualizarStatus(c.id, "recusado")}
+                  />
+                  <label className="form-check-label">Não vou</label>
+                </div>
+              </div>
+            </div>
           ))}
 
           <Button onClick={salvarConfirmacao} className="mt-3 btn btn--purple text-white">

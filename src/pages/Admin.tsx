@@ -47,6 +47,7 @@ type Convidado = {
   grupo_id: string;
   principal: boolean;
   confirmou: boolean;
+  status?: "confirmado" | "recusado" | "pendente";
 };
 
 
@@ -104,7 +105,6 @@ export default function Admin() {
   const gruposPaginados = gruposFiltrados.slice(indexInicial, indexFinal);
   const totalPaginas = Math.ceil(gruposFiltrados.length / gruposPorPagina);
   const totalConvidados = convidados.length;
-  const confirmados = convidados.filter(c => c.confirmou).length;
   const [grupoEditando, setGrupoEditando] = useState<Grupo | null>(null);
   const [modalGrupo, setModalGrupo] = useState(false);
   const [novoGrupo, setNovoGrupo] = useState({
@@ -115,6 +115,9 @@ export default function Admin() {
   const [novosConvidados, setNovosConvidados] = useState<
     { nome: string; principal: boolean }[]
   >([{ nome: "", principal: false }]);
+  const confirmados = convidados.filter(c => getStatus(c) === "confirmado").length;
+  const recusados = convidados.filter(c => getStatus(c) === "recusado").length;
+  const pendentes = convidados.filter(c => getStatus(c) === "pendente").length;
 
   function editarGrupo(grupo: Grupo) {
     setGrupoEditando(grupo);
@@ -204,6 +207,7 @@ export default function Admin() {
       nome: convidadoEditando.nome,
       principal: convidadoEditando.principal,
       confirmou: convidadoEditando.confirmou,
+      status: convidadoEditando.status || getStatus(convidadoEditando),
     });
 
     await swalSuccess("Convidado atualizado!");
@@ -537,6 +541,14 @@ export default function Admin() {
     }
   }
 
+  function getStatus(convidado: Convidado) {
+    if (convidado.status) return convidado.status;
+
+    if (convidado.confirmou === true) return "confirmado";
+
+    return "pendente";
+  }
+
   return (
     <Container className="py-4">
         <Button
@@ -740,7 +752,9 @@ export default function Admin() {
 
       <h2 className="mt-5">Lista de Convidados</h2>
       <p>
-        <b>Confirmados:</b> {confirmados} / {totalConvidados}
+        <b>Confirmados:</b> {confirmados} <br />
+        <b>Não vão:</b> {recusados} <br />
+        <b>Pendentes:</b> {pendentes}
       </p>
 
     <Input
@@ -806,11 +820,18 @@ export default function Admin() {
                   <br />
                   <small
                     style={{
-                      color: c.confirmou ? "green" : "red",
+                      color:
+                        getStatus(c) === "confirmado"
+                          ? "green"
+                          : getStatus(c) === "recusado"
+                          ? "red"
+                          : "orange",
                       fontWeight: 500,
                     }}
                   >
-                    {c.confirmou ? "Confirmado" : "Pendente"}
+                    {getStatus(c) === "confirmado" && "🟢 Confirmado"}
+                    {getStatus(c) === "recusado" && "🔴 Não vai"}
+                    {getStatus(c) === "pendente" && "🟡 Pendente"}
                   </small>
                 </div>
             
@@ -856,6 +877,7 @@ export default function Admin() {
           →
         </Button>
       </div>
+      <small className="d-block text-center mt-3 ">Total de convidados: {totalConvidados}</small>
 
       <Card className="mt-4 shadow-sm">
         <CardBody>
@@ -1190,19 +1212,55 @@ export default function Admin() {
               </FormGroup>
                   
               <FormGroup className="mt-3">
-                <Label>Confirmou presença</Label>
+                <Label>Status</Label>
                 <div>
-                  <Input
-                    type="checkbox"
-                    checked={convidadoEditando.confirmou}
-                    onChange={(e) =>
-                      setConvidadoEditando({
-                        ...convidadoEditando,
-                        confirmou: e.target.checked,
-                      })
-                    }
-                  />{" "}
-                  Confirmado
+                  <FormGroup check inline>
+                    <Input
+                      type="radio"
+                      name="status"
+                      checked={getStatus(convidadoEditando) === "confirmado"}
+                      onChange={() =>
+                        setConvidadoEditando({
+                          ...convidadoEditando,
+                          status: "confirmado",
+                          confirmou: true,
+                        })
+                      }
+                    />
+                    <Label check>Confirmado</Label>
+                  </FormGroup>
+                    
+                  <FormGroup check inline>
+                    <Input
+                      type="radio"
+                      name="status"
+                      checked={getStatus(convidadoEditando) === "recusado"}
+                      onChange={() =>
+                        setConvidadoEditando({
+                          ...convidadoEditando,
+                          status: "recusado",
+                          confirmou: false,
+                        })
+                      }
+                    />
+                    <Label check>Não vai</Label>
+                  </FormGroup>
+                    
+                  <FormGroup check inline>
+                    <Input
+                      type="radio"
+                      name="status"
+                      checked={getStatus(convidadoEditando) === "pendente"}
+                      onChange={() =>
+                        setConvidadoEditando({
+                          ...convidadoEditando,
+                          status: "pendente",
+                          confirmou: false,
+                        })
+                      }
+                    />
+                    <Label check>Pendente</Label>
+                  </FormGroup>
                 </div>
               </FormGroup>
             </>
