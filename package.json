@@ -14,6 +14,7 @@
     "@leenguyen/react-flip-clock-countdown": "^1.7.2",
     "@popperjs/core": "^2.11.8",
     "bootstrap": "^5.3.8",
+    "file-saver": "^2.0.5",
     "firebase": "^12.9.0",
     "react": "^19.2.0",
     "react-data-table-component": "^7.7.0",
@@ -25,10 +26,12 @@
     "reactstrap": "^9.2.3",
     "sweetalert2": "^11.26.21",
     "sweetalert2-react-content": "^5.1.1",
-    "swiper": "^12.1.2"
+    "swiper": "^12.1.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",

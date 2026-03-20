@@ -13,6 +13,8 @@ import { swalError, swalSuccess } from "../helpers/swalAlert";
 import Swal from "sweetalert2";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { NumericFormat } from "react-number-format";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 type Mensagem = {
   id: string;
@@ -555,6 +557,54 @@ export default function Admin() {
     return "pendente";
   }
 
+  function exportarConvidados() {
+    // Dados principais
+    const dadosParaExcel = convidados.map(c => ({
+      Nome: c.nome,
+      Criança: c.crianca ? "Sim" : "Não",
+      Status: !c.status ? "Pendente" : c.status,
+    }));
+
+    // Totais gerais
+    const totalConvidados = convidados.length;
+    const totalCriancas = convidados.filter(c => c.crianca).length;
+    const totalPendentes = convidados.filter(c => !c.status || c.status === "pendente").length;
+    const totalVai = convidados.filter(c => c.status === "confirmado").length;
+    const totalNaoVai = convidados.filter(c => c.status === "recusado").length;
+
+    // Criar planilha
+    const ws = XLSX.utils.json_to_sheet(dadosParaExcel);
+
+    // Adicionar resumo na coluna E
+    const resumo = [
+      ["Resumo Geral", ""],
+      ["Total de Convidados", totalConvidados],
+      ["Número de Crianças", totalCriancas],
+      ["Pendentes", totalPendentes],
+      ["Vai", totalVai],
+      ["Não Vai", totalNaoVai],
+    ];
+
+    // Colocar o resumo na coluna E (índice 4, pois A=0)
+    resumo.forEach((row, i) => {
+      ws[`E${i + 1}`] = { t: "s", v: row[0] };
+      ws[`F${i + 1}`] = { t: typeof row[1] === "number" ? "n" : "s", v: row[1] };
+    });
+
+    // Atualizar o range da planilha para incluir as colunas E e F
+    const range = XLSX.utils.decode_range(ws['!ref']!);
+    range.e.c = Math.max(range.e.c, 5); // coluna F
+    range.e.r = Math.max(range.e.r, resumo.length - 1);
+    ws['!ref'] = XLSX.utils.encode_range(range);
+
+    // Criar workbook e baixar
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Convidados");
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, "lista_convidados_site.xlsx");
+  }
+
   return (
     <Container className="py-4">
         <Button
@@ -756,7 +806,12 @@ export default function Admin() {
         </CardBody>
       </Card>
 
-      <h2 className="mt-5">Lista de Convidados</h2>
+      <div className="d-flex justify-content-between align-items-center">
+        <h2 className="mt-5">Lista de Convidados</h2>
+        <Button className="btn--purple" onClick={exportarConvidados}>
+          Exportar Excel
+        </Button>
+      </div>
       <p>
         <b>Confirmados:</b> {confirmados} <br />
         <b>Não vão:</b> {recusados} <br />
