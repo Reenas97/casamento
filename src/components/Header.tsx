@@ -62,7 +62,7 @@ export default function Header() {
           <img className="logo" src={logo} alt="Logo do casal" />
         </NavbarBrand>
 
-        <Collapse isOpen={isOpen} navbar>
+        <Collapse isOpen={isOpen} navbar className={`${scrolled ? "navbar-collapse--scrolled" : ""}`}>
           <Nav className="mx-auto" navbar>
             <NavItem>
               <NavLink

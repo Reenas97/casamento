@@ -606,7 +606,7 @@ export default function Admin() {
   }
 
   return (
-    <Container className="py-4">
+    <Container className="py-4 admin">
         <Button
           onClick={handleLogout}
           className="btn--white"
@@ -812,12 +812,14 @@ export default function Admin() {
           Exportar Excel
         </Button>
       </div>
-      <p>
-        <b>Confirmados:</b> {confirmados} <br />
-        <b>Não vão:</b> {recusados} <br />
-        <b>Pendentes:</b> {pendentes} <br / >
-        <b>Total de crianças:</b> {totalCriancas} <br />
-      </p>
+      <Card className="bg--blue text-white mb-4">
+        <CardBody>
+          <b>Confirmados:</b> {confirmados} <br />
+          <b>Não vão:</b> {recusados} <br />
+          <b>Pendentes:</b> {pendentes} <br / >
+          <b>Total de crianças:</b> {totalCriancas} <br />
+        </CardBody>
+      </Card>
 
     <Input
       type="text"
@@ -837,38 +839,40 @@ export default function Admin() {
       return (
         <Card key={grupo.id} className="mb-3 shadow-sm">
           <CardBody>
-            <div className="d-flex justify-content-between align-items-center">
+            <div className="d-md-flex justify-content-between align-items-center">
               <h5 className="mb-0">
                 {grupo.nome_grupo}
                 <small className="ms-2 text-muted">({grupo.token})</small>
               </h5>
 
-              <div className="d-flex gap-2">
-                <Button
-                  size="sm"
-                  className="btn--purple"
-                  onClick={() => {
-                    setNovosConvidados([{ nome: "", principal: false, crianca: false }]);
-                    setGrupoEditando(grupo);
-                    setModalAdicionarConvidado(true);
-                  }}
-                >
-                  + Convidado
-                </Button>
-                
-                <button
-                  className="btn btn-sm btn-primary"
-                  onClick={() => editarGrupo(grupo)}
-                >
-                  <FaEdit />
-                </button>
-                
-                <button
-                  className="btn btn-sm btn-danger"
-                  onClick={() => excluirGrupo(grupo.id)}
-                >
-                  <FaTrash />
-                </button>
+              <div className="d-flex">
+                <div className="d-flex gap-2">
+                  <Button
+                    size="sm"
+                    className="btn btn--purple "
+                    onClick={() => {
+                      setNovosConvidados([{ nome: "", principal: false, crianca: false }]);
+                      setGrupoEditando(grupo);
+                      setModalAdicionarConvidado(true);
+                    }}
+                  >
+                    + Convidado
+                  </Button>
+                  
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => editarGrupo(grupo)}
+                  >
+                    <FaEdit />
+                  </button>
+                  
+                  <button
+                    className="btn btn-sm btn-danger"
+                    onClick={() => excluirGrupo(grupo.id)}
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
               </div>
             </div>
       
@@ -1025,7 +1029,7 @@ export default function Admin() {
             </Row>
           ))}
 
-          <Button className="btn btn--purple" onClick={adicionarCampoConvidado}>
+          <Button className="btn btn--purple mt-2" onClick={adicionarCampoConvidado}>
             + convidado
           </Button>
         

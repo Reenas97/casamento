@@ -383,6 +383,7 @@ function abrirCompraExterna() {
                     <img
                       src={qrCodePartial}
                       alt={'qr code'}
+                      className="img-fluid"
                     />
                   }
                 </div>
