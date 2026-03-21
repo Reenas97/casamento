@@ -89,6 +89,7 @@ export default function Confirmacao() {
 
   async function salvarConfirmacao() {
     const principal = convidados.find(c => c.principal);
+    const emailPrincipal = principal?.email || "";
 
     if (!principal?.email) {
       return swalError(
@@ -99,7 +100,13 @@ export default function Confirmacao() {
 
     try {
       // Monta string com todos os nomes
-      const nomesDoGrupo = convidados.map(c => c.nome).join(", ");
+      const confirmados = convidados.filter(c => c.status === "confirmado");
+
+      const nomesDoGrupo =
+        confirmados.length > 0
+        ? confirmados.map(c => c.nome).join(", ")
+        : "Nenhum convidado confirmou";
+
       const dataConfirmacao = new Date();
 
       // 1️⃣ Envia email para você apenas **uma vez**
@@ -109,13 +116,13 @@ export default function Confirmacao() {
         {
           nomes_do_grupo: nomesDoGrupo,
           grupo: grupo.nome_grupo,
-          status: convidados.map(c => c.status || "pendente").join(", "),
-          data_confirmacao: dataConfirmacao.toLocaleString("pt-BR")
+          data_confirmacao: dataConfirmacao.toLocaleString("pt-BR"),
+          email_convidado: emailPrincipal 
         },
         "vMbgZBpGnITp0wp_m"
       );
 
-      // 2️⃣ Envia email para o convidado principal, se confirmou
+      // Envia email para o convidado principal, se confirmou
       if (principal.status === "confirmado") {
         await emailjs.send(
           "service_15m06v9",
