@@ -44,6 +44,7 @@ export default function PresenteDetalhe() {
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
 
 //carregar presente
@@ -68,6 +69,15 @@ useEffect(() => {
 
   carregar();
 }, [id]);
+
+useEffect(() => {
+  const handleResize = () => {
+    setIsMobile(window.innerWidth < 768);
+  };
+
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
 
 async function enviarEmail(valorPago: number) {
   try {
@@ -420,7 +430,11 @@ function abrirCompraExterna() {
                 <div className="pix-container">
                   {modoPix === "full"
                     ?
-                    <QRCode value={presente.qrCodeValue} size={180} />
+                    <QRCode
+                      value={presente.qrCodeValue}
+                      size={500}
+                      style={{ width: "100%", height: "auto", maxWidth: isMobile ? 210 : 500 }}
+                    />
                     : 
                     <img
                       src={qrCodePartial}
