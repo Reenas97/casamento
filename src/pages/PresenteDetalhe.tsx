@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams} from "react-router-dom";
+import { useNavigate, useParams} from "react-router-dom";
 import { db } from "../firebase";
 import emailjs from "@emailjs/browser";
 import {
@@ -42,6 +42,7 @@ export default function PresenteDetalhe() {
   const [valorParcial, setValorParcial] = useState("");
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
+  const navigate = useNavigate();
 
 
 //carregar presente
@@ -233,6 +234,14 @@ function abrirCompraExterna() {
   return (
     <Container className="py-5">
       <Row>
+        <Col xs="12" md="12" lg="12">
+        <Button
+          className="mb-3 btn btn--purple"
+          onClick={() => navigate("/lista")}
+        >
+          ← Voltar para lista
+        </Button>
+        </Col>
         <Col xs="12" md="12" lg="12" className="mb-3">
           <h1>{presente.nome}</h1>
         </Col>

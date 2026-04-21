@@ -24,7 +24,10 @@ export default function ListaPresentes() {
   const [presentes, setPresentes] = useState<Presente[]>([]);
   const navigate = useNavigate();
   const itensPorPagina = 12;
-  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [paginaAtual, setPaginaAtual] = useState(() => {
+    const paginaSalva = sessionStorage.getItem("paginaPresentes");
+    return paginaSalva ? Number(paginaSalva) : 1;
+  });
   const [filtroPagamento, setFiltroPagamento] = useState<string>("todos");
   const [filtroValor, setFiltroValor] = useState<string>("todos");
   const [filtroFaltante, setFiltroFaltante] = useState<string>("todos");
@@ -123,7 +126,9 @@ export default function ListaPresentes() {
     });
   }, [paginaAtual]);
 
-
+  useEffect(() => {
+    sessionStorage.setItem("paginaPresentes", String(paginaAtual));
+  }, [paginaAtual]);
 
   //const totalPaginas = Math.ceil(presentes.length / itensPorPagina);
 
