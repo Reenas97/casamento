@@ -116,6 +116,13 @@ export default function ListaPresentes() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [paginaAtual]);
+
 
 
   //const totalPaginas = Math.ceil(presentes.length / itensPorPagina);
