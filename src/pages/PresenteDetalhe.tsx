@@ -16,6 +16,7 @@ import { FaHandSparkles, FaInfoCircle, FaSmile, FaSmileBeam } from "react-icons/
 import { swalError, swalSuccess } from "../helpers/swalAlert";
 import qrCodePartial from "../assets/qrcode.png";
 import { NumericFormat } from "react-number-format";
+import { FiCopy } from "react-icons/fi";
 
 type Presente = {
   id: string;
@@ -231,6 +232,31 @@ function abrirCompraExterna() {
   setShowPix(true);
 }
 
+  async function copiarPix() {
+    try {
+      const valorParaCopiar =
+        modoPix === "full"
+          ? presente?.qrCodeValue // copia o código PIX completo
+          : "rdbsanchez@gmail.com"; // copia a chave
+    
+      if (!valorParaCopiar) {
+        await swalError("Erro", "Não foi possível copiar.");
+        return;
+      }
+    
+      await navigator.clipboard.writeText(valorParaCopiar);
+    
+      await swalSuccess(
+        "Copiado! 📋",
+        modoPix === "full"
+          ? "Código PIX copiado com sucesso."
+          : "Chave PIX copiada com sucesso."
+      );
+    } catch (err) {
+      console.error(err);
+      await swalError("Erro", "Não foi possível copiar a chave.");
+    }
+  }
   return (
     <Container className="py-5">
       <Row>
@@ -379,8 +405,15 @@ function abrirCompraExterna() {
         <ModalBody className="text-center">
           {modoPix !== "externo" ? (
             <>
-              <p>
+              <p className="d-flex align-items-center justify-content-center gap-2">
                 Chave PIX: <b>rdbsanchez@gmail.com</b>
+                <Button
+                  className="btn btn--purple"
+                  onClick={copiarPix}
+                  style={{ padding: "4px 8px" }}
+                >
+                  <FiCopy />
+                </Button>
               </p>
 
               <div className="d-flex justify-content-center mb-3">
