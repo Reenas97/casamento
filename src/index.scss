@@ -264,9 +264,14 @@ body {
         }
       }
 
-      .nav-link {
-        color: $middle-purple!important;
-        text-shadow: none;
+      .navbar-collapse{
+        height: 85px;
+        .nav-link {
+          color: $middle-purple!important;
+          text-shadow: none;
+          padding-top: 0;
+          padding-bottom: 0;
+        }
       }
 
       .btn--white {
