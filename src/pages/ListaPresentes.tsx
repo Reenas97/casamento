@@ -3,8 +3,8 @@ import { db } from "../firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
-import { Container, Row, Col, Card, CardBody, Badge, PaginationItem, Pagination, PaginationLink, CardImg, Progress, Label, Input, Tooltip  } from "reactstrap";
-import { FiInfo } from "react-icons/fi";
+import { Container, Row, Col, Card, CardBody, Badge, PaginationItem, Pagination, PaginationLink, CardImg, Progress, Label, Input, Tooltip, Button  } from "reactstrap";
+import { FiFilter, FiInfo } from "react-icons/fi";
 
 type Presente = {
   id: string;
@@ -33,6 +33,9 @@ export default function ListaPresentes() {
   const [filtroFaltante, setFiltroFaltante] = useState<string>("todos");
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const toggleTooltip = () => setTooltipOpen(!tooltipOpen);
+  const [ordenacao, setOrdenacao] = useState<"asc" | "desc" | "default">("default");
+  const [tooltipOrdenacao, setTooltipOrdenacao] = useState(false);
+  const toggleTooltipOrdenacao = () => setTooltipOrdenacao(!tooltipOrdenacao);
 
   const presentesFiltrados = presentes.filter((p) => {
     const temLink = !!p.link?.trim();
@@ -88,6 +91,14 @@ export default function ListaPresentes() {
     if (indisponivelA !== indisponivelB) {
       return indisponivelA ? 1 : -1;
     }
+
+      if (ordenacao === "asc") {
+        return a.preco - b.preco;
+      }
+    
+      if (ordenacao === "desc") {
+        return b.preco - a.preco;
+      }
 
     //depois ordena alfabeticamente
     return a.nome.localeCompare(b.nome, "pt-BR", { sensitivity: "base" });
@@ -163,7 +174,7 @@ export default function ListaPresentes() {
           <b>Loja</b>: comprar o presente diretamente na loja.
         </div>
       </Tooltip>
-      <Row className="mt-4">
+      <Row className="mt-4 align-items-center">
         {/* filtro pagamento */}
         <Col md="4" className="mb-3 filter">
             <Label>Filtro por forma de pagamento do presente: </Label>
@@ -184,7 +195,7 @@ export default function ListaPresentes() {
         </Col>
             
         {/* filtro valor */}
-        <Col md="4" className="mb-3 filter">
+        <Col md="3" className="mb-3 filter">
           <Label>Filtro por valor do presente: </Label>
           <Input
             className="form-select"
@@ -222,6 +233,28 @@ export default function ListaPresentes() {
             <option value="menos50">Falta menos de 50%</option>
             <option value="mais50">Falta mais de 50%</option>
           </Input>
+        </Col>
+        <Col md="1">
+          <Button
+            id="btnOrdenacao"
+            className="btn btn--purple mt-3"
+            onClick={() => {
+              setOrdenacao((prev) =>
+                prev === "asc" ? "desc" : prev === "desc" ? "default" : "asc"
+              );
+              setPaginaAtual(1);
+            }}
+          >
+            <FiFilter />
+          </Button>
+          <Tooltip
+            placement="top"
+            isOpen={tooltipOrdenacao}
+            target="btnOrdenacao"
+            toggle={toggleTooltipOrdenacao}
+          >
+            Ordenar por preço
+          </Tooltip>
         </Col>
         {presentesPaginados.map((p) => {
           //flags de pagamento
@@ -268,8 +301,6 @@ export default function ListaPresentes() {
 
           const faltante = Math.max(precoTotal - valorArrecadado, 0);
           const indisponivel = p.reservado || valorArrecadado >= precoTotal;
-
-          console.log(p.nome, indisponivel, tagsPagamento)
         
           return (
             <Col key={p.id} xs="12" md="6" lg="4" className="mb-3">
