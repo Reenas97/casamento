@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { Button, Container, Form, FormGroup, Input, Label } from "reactstrap";
 import { db } from "../firebase";
 import { swalError, swalSuccess } from "../helpers/swalAlert";
-import emailjs from "@emailjs/browser";
+//import emailjs from "@emailjs/browser";
 
 export default function Confirmacao() {
   const [searchParams] = useSearchParams();
@@ -110,33 +110,21 @@ export default function Confirmacao() {
       const dataConfirmacao = new Date();
 
       // 1️⃣ Envia email para você apenas **uma vez**
-      await emailjs.send(
-        "service_15m06v9",
-        "template_gvlgpk8",
-        {
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           nomes_do_grupo: nomesDoGrupo,
           grupo: grupo.nome_grupo,
           data_confirmacao: dataConfirmacao.toLocaleString("pt-BR"),
-          email_convidado: emailPrincipal 
-        },
-        "vMbgZBpGnITp0wp_m"
-      );
-
-      // Envia email para o convidado principal, se confirmou
-      if (principal.status === "confirmado") {
-        await emailjs.send(
-          "service_15m06v9",
-          "template_gs1ecx4",
-          {
-            nome: principal.nome,
-            nomes_do_grupo: nomesDoGrupo,
-            data_evento: "30/08/2026",
-            data_confirmacao: dataConfirmacao.toLocaleString("pt-BR"),
-            email_convidado: principal.email
-          },
-          "vMbgZBpGnITp0wp_m"
-        );
-      }
+          email_convidado: emailPrincipal,
+          nome: principal.nome,
+          data_evento: "30/08/2026",
+          enviarEmailConvidado: principal.status === "confirmado"
+        }),
+      });
 
       // Depois que todos os emails foram enviados, salva no banco
       const promises = convidados.map((c) => {
