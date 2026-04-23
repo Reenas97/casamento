@@ -15,7 +15,7 @@ export default async function handler(req: any, res: any) {
     } = req.body;
 
     // 📩 Email para você (noivos)
-    await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+    const responseNoivos = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -23,7 +23,7 @@ export default async function handler(req: any, res: any) {
       body: JSON.stringify({
         service_id: "service_15m06v9",
         template_id: "template_gvlgpk8",
-        user_id: "vMbgZBpGnITp0wp_m",
+        public_key: "vMbgZBpGnITp0wp_m", // ⚠️ se der erro, trocar por public_key
         template_params: {
           nomes_do_grupo,
           grupo,
@@ -33,9 +33,16 @@ export default async function handler(req: any, res: any) {
       }),
     });
 
-    // 📩 Email para convidado (só se confirmou)
+    const textNoivos = await responseNoivos.text();
+
+    if (!responseNoivos.ok) {
+      console.error("Erro EmailJS (noivos):", textNoivos);
+      return res.status(500).json({ error: textNoivos });
+    }
+
+    // 📩 Email para convidado (SÓ se confirmou)
     if (enviarEmailConvidado) {
-      await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+      const responseConvidado = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -43,7 +50,7 @@ export default async function handler(req: any, res: any) {
         body: JSON.stringify({
           service_id: "service_15m06v9",
           template_id: "template_gs1ecx4",
-          user_id: "vMbgZBpGnITp0wp_m",
+          public_key: "vMbgZBpGnITp0wp_m", // ⚠️ se der erro, trocar por public_key
           template_params: {
             nome,
             nomes_do_grupo,
@@ -53,11 +60,19 @@ export default async function handler(req: any, res: any) {
           },
         }),
       });
+
+      const textConvidado = await responseConvidado.text();
+
+      if (!responseConvidado.ok) {
+        console.error("Erro EmailJS (convidado):", textConvidado);
+        return res.status(500).json({ error: textConvidado });
+      }
     }
 
     return res.status(200).json({ success: true });
+
   } catch (error) {
-    console.error(error);
+    console.error("Erro geral:", error);
     return res.status(500).json({ success: false });
   }
 }

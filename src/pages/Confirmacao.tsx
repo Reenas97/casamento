@@ -109,7 +109,6 @@ export default function Confirmacao() {
 
       const dataConfirmacao = new Date();
 
-      const confirmou = convidados.some(c => c.status === "confirmado");
       // 1️⃣ Envia email para você apenas **uma vez**
       await fetch("/api/send-email", {
         method: "POST",
@@ -123,7 +122,7 @@ export default function Confirmacao() {
           email_convidado: emailPrincipal,
           nome: principal.nome,
           data_evento: "30/08/2026",
-          enviarEmailConvidado: principal.status === confirmou
+          enviarEmailConvidado: principal.status === "confirmado"
         }),
       });
 
