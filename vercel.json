@@ -2,10 +2,5 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/" }
-  ],
-  "functions": {
-    "api/send-email.ts": {
-      "runtime": "nodejs@18.x"
-    }
-  }
+  ]
 }
