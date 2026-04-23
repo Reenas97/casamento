@@ -39,7 +39,7 @@ export default async function handler(req: any, res: any) {
       body: JSON.stringify({
         service_id: "service_15m06v9",
         template_id: "template_gvlgpk8",
-        public_key: "vMbgZBpGnITp0wp_m",
+        user_id: "vMbgZBpGnITp0wp_m",
         template_params: {
           nomes_do_grupo,
           grupo,
@@ -66,7 +66,7 @@ export default async function handler(req: any, res: any) {
         body: JSON.stringify({
           service_id: "service_15m06v9",
           template_id: "template_gs1ecx4",
-          public_key: "vMbgZBpGnITp0wp_m",
+          user_id: "vMbgZBpGnITp0wp_m",
           template_params: {
             nome,
             nomes_do_grupo,
