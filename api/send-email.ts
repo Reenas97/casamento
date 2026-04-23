@@ -9,6 +9,14 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
+    // 🔥 CORREÇÃO PRINCIPAL (parse do body)
+    let body;
+    try {
+      body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    } catch {
+      body = req.body;
+    }
+
     const {
       nomes_do_grupo,
       grupo,
@@ -17,7 +25,10 @@ export default async function handler(req: any, res: any) {
       nome,
       data_evento,
       enviarEmailConvidado
-    } = req.body;
+    } = body;
+
+    // 🧪 DEBUG (pode remover depois)
+    console.log("BODY RECEBIDO:", body);
 
     // 📩 Email para noivos
     const responseNoivos = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
@@ -28,7 +39,7 @@ export default async function handler(req: any, res: any) {
       body: JSON.stringify({
         service_id: "service_15m06v9",
         template_id: "template_gvlgpk8",
-        public_key: "vMbgZBpGnITp0wp_m", // ⚠️ troca aqui
+        public_key: "vMbgZBpGnITp0wp_m",
         template_params: {
           nomes_do_grupo,
           grupo,
@@ -55,7 +66,7 @@ export default async function handler(req: any, res: any) {
         body: JSON.stringify({
           service_id: "service_15m06v9",
           template_id: "template_gs1ecx4",
-          public_key: "vMbgZBpGnITp0wp_m", // ⚠️ troca aqui
+          public_key: "vMbgZBpGnITp0wp_m",
           template_params: {
             nome,
             nomes_do_grupo,
