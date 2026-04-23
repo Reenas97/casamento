@@ -1,11 +1,12 @@
 export default async function handler(req: any, res: any) {
-    if (req.method === "OPTIONS") {
-        return res.status(200).end();
-    }
+  // ✅ CORS (resolve 405/OPTIONS)
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
-
 
   try {
     const {
@@ -18,7 +19,7 @@ export default async function handler(req: any, res: any) {
       enviarEmailConvidado
     } = req.body;
 
-    // 📩 Email para você (noivos)
+    // 📩 Email para noivos
     const responseNoivos = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
       method: "POST",
       headers: {
@@ -27,7 +28,7 @@ export default async function handler(req: any, res: any) {
       body: JSON.stringify({
         service_id: "service_15m06v9",
         template_id: "template_gvlgpk8",
-        public_key: "vMbgZBpGnITp0wp_m", // ⚠️ se der erro, trocar por public_key
+        public_key: "vMbgZBpGnITp0wp_m", // ⚠️ troca aqui
         template_params: {
           nomes_do_grupo,
           grupo,
@@ -44,7 +45,7 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ error: textNoivos });
     }
 
-    // 📩 Email para convidado (SÓ se confirmou)
+    // 📩 Email para convidado (se confirmou)
     if (enviarEmailConvidado) {
       const responseConvidado = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
         method: "POST",
@@ -54,7 +55,7 @@ export default async function handler(req: any, res: any) {
         body: JSON.stringify({
           service_id: "service_15m06v9",
           template_id: "template_gs1ecx4",
-          public_key: "vMbgZBpGnITp0wp_m", // ⚠️ se der erro, trocar por public_key
+          public_key: "vMbgZBpGnITp0wp_m", // ⚠️ troca aqui
           template_params: {
             nome,
             nomes_do_grupo,
